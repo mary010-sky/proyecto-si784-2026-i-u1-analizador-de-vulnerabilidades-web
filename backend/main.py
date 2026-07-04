@@ -1,199 +1,105 @@
-from fastapi import FastAPI, Depends, HTTPException
+"""
+VulnScan Pro - Backend Principal
+FastAPI + MySQL + DeepSeek AI + Scanner Avanzado
+"""
+import os
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import List, Optional
-from sqlalchemy.orm import Session
-from database import engine, get_db
-import models
-import requests
-import datetime
-import json
-import re
-from urllib.parse import urlparse, urlencode, parse_qsl, urlunparse
+from fastapi.responses import JSONResponse
+from dotenv import load_dotenv
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
-# Create database tables
-models.Base.metadata.create_all(bind=engine)
+load_dotenv()
 
-app = FastAPI(title="Web Vulnerability Scanner API")
+ALLOWED_ORIGINS = os.getenv(
+    "ALLOWED_ORIGINS",
+    "http://localhost:3000,http://127.0.0.1:3000,https://149.34.48.176"
+).split(",")
 
-# Setup CORS
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    from database import init_db
+    init_db()
+    yield
+
+
+limiter = Limiter(key_func=get_remote_address)
+
+app = FastAPI(
+    title="VulnScan Pro API",
+    description="Plataforma profesional de análisis y escaneo de vulnerabilidades web con IA",
+    version="3.0.0",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    lifespan=lifespan,
+)
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
-class ScanRequest(BaseModel):
-    url: str
-    modules: List[str]
-    depth: int = 2
-    timeout: int = 10
 
-class ScanResponse(BaseModel):
-    id: int
-    target_url: str
-    status: str
-    result_summary: dict
+# ── Security headers middleware ───────────────────────────────────────────────
 
-def simple_header_check(url: str, timeout: int):
-    try:
-        response = requests.get(url, timeout=timeout)
-        headers = response.headers
-        findings = []
-        if 'X-Frame-Options' not in headers:
-            findings.append("Missing X-Frame-Options header")
-        if 'Content-Security-Policy' not in headers:
-            findings.append("Missing Content-Security-Policy header")
-        if 'Strict-Transport-Security' not in headers:
-            findings.append("Missing Strict-Transport-Security header")
-        if 'X-Content-Type-Options' not in headers:
-            findings.append("Missing X-Content-Type-Options header")
-        return {"status": "success", "findings": findings, "status_code": response.status_code}
-    except Exception as e:
-        return {"status": "error", "error": str(e)}
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    return response
 
-def check_xss(url: str, timeout: int):
-    findings = []
-    try:
-        payload = "<script>alert('XSS')</script>"
-        parsed = urlparse(url)
-        params = parse_qsl(parsed.query)
-        if params:
-            new_params = [(k, v + payload) for k, v in params]
-            test_url = urlunparse(parsed._replace(query=urlencode(new_params)))
-        else:
-            test_url = url + ("&" if "?" in url else "?") + f"test={payload}"
-        
-        response = requests.get(test_url, timeout=timeout)
-        if payload in response.text:
-            findings.append("Potential XSS vulnerability: Payload reflected in response body.")
-            
-        return {"status": "success", "findings": findings}
-    except Exception as e:
-        return {"status": "error", "error": str(e)}
 
-def check_sqli(url: str, timeout: int):
-    findings = []
-    sql_errors = ["you have an error in your sql syntax", "warning: mysql", "unclosed quotation mark", "quoted string not properly terminated", "pg_query()", "sqlite3.operationalerror"]
-    try:
-        payload = "'"
-        parsed = urlparse(url)
-        params = parse_qsl(parsed.query)
-        if params:
-            new_params = [(k, v + payload) for k, v in params]
-            test_url = urlunparse(parsed._replace(query=urlencode(new_params)))
-        else:
-            test_url = url + ("&" if "?" in url else "?") + f"id=1{payload}"
-            
-        response = requests.get(test_url, timeout=timeout)
-        lower_body = response.text.lower()
-        
-        for error in sql_errors:
-            if error in lower_body:
-                findings.append(f"Potential SQL Injection: Found SQL error '{error}' in response.")
-                break
-                
-        return {"status": "success", "findings": findings}
-    except Exception as e:
-        return {"status": "error", "error": str(e)}
+# ── Routers ───────────────────────────────────────────────────────────────────
 
-def check_csrf(url: str, timeout: int):
-    findings = []
-    try:
-        response = requests.get(url, timeout=timeout)
-        body = response.text.lower()
-        
-        if "<form" in body:
-            if not re.search(r'name=["\']?(csrf|token|authenticity_token|_csrf)["\']?', body):
-                findings.append("Potential CSRF: Found <form> tag without common CSRF token fields.")
-        
-        return {"status": "success", "findings": findings}
-    except Exception as e:
-        return {"status": "error", "error": str(e)}
+from routes.auth_routes import router as auth_router
+from routes.scan_routes import router as scan_router
+from routes.admin_routes import router as admin_router
+from routes.report_routes import router as report_router
+from solutions_routes import router as solutions_router
 
-def check_open_redirect(url: str, timeout: int):
-    findings = []
-    try:
-        payload = "http://evil-domain.com"
-        test_url = url + ("&" if "?" in url else "?") + f"redirect={payload}&next={payload}"
-        
-        response = requests.get(test_url, timeout=timeout, allow_redirects=False)
-        
-        if response.status_code in [301, 302, 303, 307, 308]:
-            location = response.headers.get("Location", "")
-            if location == payload or location.startswith(payload):
-                findings.append("Potential Open Redirect: Server redirects to injected external domain.")
-                
-        return {"status": "success", "findings": findings}
-    except Exception as e:
-        return {"status": "error", "error": str(e)}
+app.include_router(auth_router)
+app.include_router(scan_router)
+app.include_router(admin_router)
+app.include_router(report_router)
+app.include_router(solutions_router)
 
-def check_info_disclosure(url: str, timeout: int):
-    findings = []
-    try:
-        response = requests.get(url, timeout=timeout)
-        headers = response.headers
-        
-        if "Server" in headers and re.search(r'\d', headers["Server"]):
-            findings.append(f"Information Disclosure: Server header exposes version: {headers['Server']}")
-        
-        if "X-Powered-By" in headers:
-            findings.append(f"Information Disclosure: X-Powered-By header is present: {headers['X-Powered-By']}")
-            
-        if "stack trace" in response.text.lower() or "exception in thread" in response.text.lower():
-            findings.append("Information Disclosure: Potential stack trace found in response body.")
-            
-        return {"status": "success", "findings": findings}
-    except Exception as e:
-        return {"status": "error", "error": str(e)}
 
-@app.post("/api/scan", response_model=ScanResponse)
-def run_scan(scan_req: ScanRequest, db: Session = Depends(get_db)):
-    # Basic URL validation
-    if not scan_req.url.startswith(("http://", "https://")):
-        scan_req.url = "http://" + scan_req.url
+# ── Health & info ─────────────────────────────────────────────────────────────
 
-    # Create scan record
-    db_scan = models.Scan(target_url=scan_req.url, status="running")
-    db.add(db_scan)
-    db.commit()
-    db.refresh(db_scan)
-    
-    results = {}
-    
-    if "Headers" in scan_req.modules:
-        results["Headers"] = simple_header_check(scan_req.url, scan_req.timeout)
-    if "XSS" in scan_req.modules:
-        results["XSS"] = check_xss(scan_req.url, scan_req.timeout)
-    if "SQL Injection" in scan_req.modules:
-        results["SQL Injection"] = check_sqli(scan_req.url, scan_req.timeout)
-    if "CSRF" in scan_req.modules:
-        results["CSRF"] = check_csrf(scan_req.url, scan_req.timeout)
-    if "Open Redirect" in scan_req.modules:
-        results["Open Redirect"] = check_open_redirect(scan_req.url, scan_req.timeout)
-    if "Info Disclosure" in scan_req.modules:
-        results["Info Disclosure"] = check_info_disclosure(scan_req.url, scan_req.timeout)
-                
-    # Update scan record
-    db_scan.status = "completed"
-    db_scan.result_summary = json.dumps(results)
-    db.commit()
-    db.refresh(db_scan)
-    
+@app.get("/health", tags=["System"])
+def health():
+    return {"status": "ok", "version": "3.0.0", "environment": os.getenv("ENVIRONMENT", "production")}
+
+
+@app.get("/api/modules", tags=["System"])
+def list_modules():
     return {
-        "id": db_scan.id,
-        "target_url": db_scan.target_url,
-        "status": db_scan.status,
-        "result_summary": results
+        "modules": [
+            {"id": "Headers", "name": "HTTP Headers", "description": "Analiza headers de seguridad HTTP"},
+            {"id": "SSL", "name": "SSL/TLS", "description": "Verifica certificados y configuración SSL"},
+            {"id": "XSS", "name": "Cross-Site Scripting", "description": "Detecta vulnerabilidades XSS"},
+            {"id": "SQLi", "name": "SQL Injection", "description": "Detecta inyección SQL"},
+            {"id": "CSRF", "name": "CSRF", "description": "Verifica tokens CSRF en formularios"},
+            {"id": "OpenRedirect", "name": "Open Redirect", "description": "Detecta redirecciones abiertas"},
+            {"id": "LFI", "name": "LFI / Path Traversal", "description": "Detecta inclusión de archivos locales"},
+            {"id": "CommandInjection", "name": "Command Injection", "description": "Detecta inyección de comandos"},
+            {"id": "SSRF", "name": "SSRF", "description": "Detecta Server-Side Request Forgery"},
+            {"id": "SensitiveFiles", "name": "Archivos Sensibles", "description": "Busca archivos expuestos"},
+            {"id": "HttpMethods", "name": "HTTP Methods", "description": "Verifica métodos HTTP peligrosos"},
+            {"id": "ErrorDisclosure", "name": "Error Disclosure", "description": "Detecta divulgación de errores"},
+            {"id": "Crawling", "name": "Crawling", "description": "Descubre URLs y endpoints"},
+        ]
     }
-
-@app.get("/api/scans")
-def get_scans(db: Session = Depends(get_db)):
-    scans = db.query(models.Scan).order_by(models.Scan.id.desc()).all()
-    # parse json
-    for scan in scans:
-        if scan.result_summary:
-            scan.result_summary = json.loads(scan.result_summary)
-    return scans
