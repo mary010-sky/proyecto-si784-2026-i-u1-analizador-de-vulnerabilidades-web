@@ -8,7 +8,7 @@
 
 **Escuela Profesional de Ingeniería de Sistemas**
 
-**Analizador de Vulnerabilidades Web — VulnScan Pro**
+**Proyecto: Analizador de Vulnerabilidades Web — VulnScan Pro**
 
 Curso: *Calidad y Pruebas de Software*
 
@@ -30,17 +30,17 @@ Integrantes:
 
 ---
 
-**Analizador de Vulnerabilidades Web — VulnScan Pro**
+**Sistema: Analizador de Vulnerabilidades Web — VulnScan Pro**
 
-Informe de Especificación de Requerimientos de Software
+**Documento de Especificación de Requerimientos de Software**
 
-Versión 1.0
+Versión 1.1
 
-| CONTROL DE VERSIONES |                  |                |              |            |                  |
-|:--------------------:|:-----------------|:---------------|:-------------|:-----------|:-----------------|
-| Versión              | Hecha por        | Revisada por   | Aprobada por | Fecha      | Motivo           |
-| 1.0                  | M. Calloticona   | M. Ramos       |              | 05/04/2026 | Versión Original |
-| 1.1                  | M. Ramos         | M. Calloticona |              | 12/04/2026 | Revisión de casos de uso y requerimientos no funcionales |
+| CONTROL DE VERSIONES | | | | | |
+|:---:|:---|:---|:---|:---|:---|
+| Versión | Hecha por | Revisada por | Aprobada por | Fecha | Motivo |
+| 1.0 | M. Calloticona | M. Ramos | | 28/03/2026 | Versión Original |
+| 1.1 | M. Ramos | M. Calloticona | | 04/04/2026 | Ampliación RF/RNF; modelos conceptual y lógico |
 
 <div style="page-break-after: always;"></div>
 
@@ -48,415 +48,942 @@ Versión 1.0
 
 ## ÍNDICE GENERAL
 
-1. [Introducción](#1-introducción)  
-   1.1. Propósito  
-   1.2. Alcance  
-   1.3. Definiciones, Siglas y Abreviaturas  
-   1.4. Referencias  
+[INTRODUCCION](#introduccion)
 
-2. [Descripción General](#2-descripción-general)  
-   2.1. Perspectiva del Producto  
-   2.2. Funciones del Producto  
-   2.3. Características de los Usuarios  
-   2.4. Restricciones  
-   2.5. Suposiciones y Dependencias  
+[I. Generalidades de la Empresa](#i-generalidades-de-la-empresa)
 
-3. [Requerimientos Funcionales](#3-requerimientos-funcionales)  
-   3.1. Módulo de Autenticación y Usuarios  
-   3.2. Módulo de Escaneo  
-   3.3. Módulo de Inteligencia Artificial  
-   3.4. Módulo de Reportes  
-   3.5. Módulo de Administración  
-   3.6. Módulo de Dashboard  
+[II. Visionamiento de la Empresa](#ii-visionamiento-de-la-empresa)
 
-4. [Requerimientos No Funcionales](#4-requerimientos-no-funcionales)  
+[III. Análisis de Procesos](#iii-análisis-de-procesos)
 
-5. [Casos de Uso](#5-casos-de-uso)  
+[IV. Especificación de Requerimientos de Software](#iv-especificación-de-requerimientos-de-software)
 
-6. [Matriz de Trazabilidad](#6-matriz-de-trazabilidad)  
+[V. Fase de Desarrollo](#v-fase-de-desarrollo)
 
-[Conclusiones](#conclusiones)  
+[CONCLUSIONES](#conclusiones)
+
+[RECOMENDACIONES](#recomendaciones)
+
+[BIBLIOGRAFÍA](#bibliografía)
+
+[WEBGRAFÍA](#webgrafía)
 
 <div style="page-break-after: always;"></div>
 
 ---
 
-## Informe de Especificación de Requerimientos de Software (SRS)
+## INTRODUCCION
 
----
+El presente documento constituye la Especificación de Requerimientos de Software (ERS) del sistema **VulnScan Pro — Analizador de Vulnerabilidades Web**, desarrollado como proyecto académico del curso de Calidad y Pruebas de Software de la Escuela Profesional de Ingeniería de Sistemas de la Universidad Privada de Tacna, bajo la supervisión del Ing. Patrick Jose Cuadros Quiroga.
 
-## 1. Introducción
+El documento describe de forma detallada todos los requerimientos funcionales y no funcionales del sistema, los procesos actuales y propuestos, las reglas de negocio, los perfiles de usuario, y los modelos conceptual y lógico del sistema.
 
-### 1.1. Propósito
+VulnScan Pro nace como respuesta a la necesidad de contar con una herramienta de análisis dinámico de seguridad de aplicaciones (DAST) que sea accesible, gratuita y con resultados en español para equipos académicos, desarrolladores independientes y PYMES de la región Tacna. El sistema implementa 13 módulos de detección de vulnerabilidades alineados con el OWASP Top 10:2021, potenciados por inteligencia artificial (DeepSeek AI), con generación de reportes exportables y un dashboard de operaciones de seguridad (SOC) en tiempo real.
 
-El presente documento tiene como propósito especificar de forma completa y precisa los requerimientos funcionales y no funcionales del sistema **VulnScan Pro — Analizador de Vulnerabilidades Web**, una plataforma DAST (Dynamic Application Security Testing) con inteligencia artificial integrada.
-
-Este documento está dirigido al equipo de desarrollo, al docente supervisor del curso, y a futuros mantenedores del sistema. Sirve como contrato técnico que define el comportamiento esperado del sistema y sus restricciones, constituyendo la base para el diseño, implementación y verificación del software.
-
-### 1.2. Alcance
-
-El sistema **VulnScan Pro** abarca los siguientes módulos funcionales:
-1. Autenticación y gestión de usuarios (con roles y protección anti-fuerza bruta)
-2. Motor de escaneo de vulnerabilidades (13 módulos OWASP Top 10)
-3. Análisis de vulnerabilidades con IA (DeepSeek)
-4. Generación y exportación de reportes (PDF, HTML, JSON)
-5. Panel de administración (gestión de usuarios y auditoría)
-6. Dashboard SOC con estadísticas en tiempo real
-
-El sistema no incluye: análisis de código fuente estático (SAST), integración con sistemas de ticketing externos, ni análisis de aplicaciones móviles nativas.
-
-### 1.3. Definiciones, Siglas y Abreviaturas
-
-| **Término** | **Definición** |
-|:------------|:---------------|
-| SRS | Software Requirements Specification |
-| RF | Requerimiento Funcional |
-| RNF | Requerimiento No Funcional |
-| UC | Use Case (Caso de Uso) |
-| DAST | Dynamic Application Security Testing |
-| OWASP | Open Web Application Security Project |
-| JWT | JSON Web Token |
-| CVSS | Common Vulnerability Scoring System |
-| CWE | Common Weakness Enumeration |
-| API | Application Programming Interface |
-| REST | Representational State Transfer |
-| CRUD | Create, Read, Update, Delete |
-
-### 1.4. Referencias
-
-- OWASP Top 10:2021 — https://owasp.org/Top10/
-- IEEE Std 830-1998 — Recommended Practice for Software Requirements Specifications
-- ISO/IEC 25010:2023 — Systems and software quality models
-- FastAPI Documentation — https://fastapi.tiangolo.com
-- Next.js 16 Documentation — https://nextjs.org/docs
+El alcance de este documento abarca desde la descripción del contexto organizacional hasta la especificación técnica de los modelos UML de análisis y diseño. Sirve como referencia técnica para el equipo de desarrollo, el docente evaluador y cualquier usuario técnico que necesite comprender la estructura y comportamiento del sistema.
 
 <div style="page-break-after: always;"></div>
 
 ---
 
-## 2. Descripción General
+## I. Generalidades de la Empresa
 
-### 2.1. Perspectiva del Producto
+### 1. Nombre de la Empresa
 
-**VulnScan Pro** es un sistema nuevo, independiente, que no reemplaza ningún sistema existente. Interactúa con:
-- **DeepSeek AI API** (externa): para análisis inteligente de vulnerabilidades.
-- **Servidor SMTP** (opcional): para notificaciones de bloqueo de cuenta.
-- **Aplicaciones web objetivo** (externas): URLs auditadas mediante peticiones HTTP/HTTPS.
+**Universidad Privada de Tacna (UPT)**
+*Escuela Profesional de Ingeniería de Sistemas — EPIS*
+*Facultad de Ingeniería*
 
-### 2.2. Funciones del Producto
+### 2. Visión
 
-Las funciones principales del sistema son:
+Ser una universidad de excelencia académica, líder en la formación de profesionales con valores éticos, capacidad de investigación y emprendimiento, comprometidos con el desarrollo sostenible de la región y el país, reconocida en el ámbito nacional e internacional.
 
-1. **Autenticación segura** con JWT, roles diferenciados y protección anti-fuerza bruta.
-2. **Escaneo automático** de vulnerabilidades web con 13 módulos especializados.
-3. **Crawling** de URLs y detección de tecnologías utilizadas por el objetivo.
-4. **Análisis IA** de cada vulnerabilidad detectada con remediación contextualizada.
-5. **Visualización** de resultados en dashboard SOC con gráficos interactivos.
-6. **Exportación** de reportes en PDF, HTML y JSON.
-7. **Administración** de usuarios, roles y logs de auditoría.
+### 3. Misión
 
-### 2.3. Características de los Usuarios
+Formar profesionales íntegros con sólidos conocimientos científicos y tecnológicos, capaces de contribuir al desarrollo de la sociedad a través de la investigación, la innovación y el servicio comunitario, bajo principios éticos y con responsabilidad social.
 
-| **Tipo de Usuario** | **Nivel técnico** | **Funciones disponibles** |
-|:--------------------|:-----------------:|:--------------------------|
-| Administrador | Alto | Todas las funciones del sistema. Gestión de usuarios y auditoría. |
-| Analista | Medio-alto | Escaneos, visualización, reportes, análisis IA. |
-| Usuario | Medio | Escaneos básicos, visualización de sus propios resultados. |
-
-### 2.4. Restricciones
-
-- El sistema opera únicamente sobre URLs accesibles desde el servidor (no en redes locales del cliente).
-- El módulo de IA requiere conexión a internet; si no está disponible, opera en modo fallback local.
-- Los escaneos tienen un timeout máximo de 60 segundos por módulo para prevenir bloqueos.
-- El sistema no realiza escaneos autenticados (no maneja credenciales de la aplicación objetivo).
-- La base de datos debe ser MySQL 8.0 nativo (no compatible con SQLite ni PostgreSQL sin modificaciones).
-
-### 2.5. Suposiciones y Dependencias
-
-- Python 3.11+ instalado en el servidor de producción.
-- Node.js 20 LTS instalado para el frontend.
-- MySQL 8.0 activo con usuario y base de datos creados.
-- Nginx instalado y configurado como proxy inverso.
-- La clave `DEEPSEEK_API_KEY` está configurada en el archivo `.env` del backend.
-
-<div style="page-break-after: always;"></div>
-
----
-
-## 3. Requerimientos Funcionales
-
-### 3.1. Módulo de Autenticación y Usuarios
-
-| **ID** | **Requerimiento** | **Descripción** | **Prioridad** |
-|:-------|:-----------------|:----------------|:-------------:|
-| RF-01 | Registro de usuarios | El sistema debe permitir el registro con username, email y contraseña. La contraseña debe tener mínimo 8 caracteres, 1 mayúscula y 1 dígito. El primer usuario registrado recibe automáticamente el rol de Administrador. | Alta |
-| RF-02 | Inicio de sesión | El sistema debe permitir autenticación con username O email + contraseña. Devuelve un JWT con expiración de 24 horas. | Alta |
-| RF-03 | Protección anti-fuerza bruta | Tras 5 intentos fallidos consecutivos, la cuenta se bloquea automáticamente por 15 minutos. El contador se reinicia en inicio de sesión exitoso. | Alta |
-| RF-04 | Cierre de sesión | El sistema debe invalidar la sesión activa del usuario (marcar el JTI como inválido en la base de datos). | Alta |
-| RF-05 | Perfil de usuario | El usuario puede ver sus datos (username, email, rol, fecha de último acceso, IP de último acceso). | Media |
-| RF-06 | Cambio de contraseña | El usuario autenticado puede cambiar su contraseña proporcionando la contraseña actual y la nueva (con las mismas reglas de validación de RF-01). | Media |
-| RF-07 | Recuperación de contraseña | El sistema debe generar un token de recuperación enviado por email (o mostrado en modo desarrollo) con expiración de 1 hora. | Baja |
-| RF-08 | Roles de usuario | El sistema soporta 3 roles: `admin` (acceso total), `analyst` (escaneos + reportes), `user` (escaneos básicos). Los endpoints aplican control de acceso por rol. | Alta |
-| RF-09 | Auditoría de acciones | El sistema debe registrar en la tabla `audit_logs`: acción, usuario, IP de origen, resultado (éxito/fallo) y timestamp, para todas las operaciones de autenticación. | Alta |
-| RF-10 | Sesiones activas | El sistema almacena en la tabla `user_sessions` las sesiones activas con: JTI, IP, User-Agent y fecha de expiración. | Media |
-
-### 3.2. Módulo de Escaneo
-
-| **ID** | **Requerimiento** | **Descripción** | **Prioridad** |
-|:-------|:-----------------|:----------------|:-------------:|
-| RF-11 | Iniciar escaneo | El usuario puede iniciar un escaneo proporcionando: URL objetivo, lista de módulos activos, profundidad de crawl (1-3), timeout por petición (5-60 s), stack tecnológico del objetivo y si se usa análisis IA. El sistema devuelve inmediatamente un `scan_id` y ejecuta el escaneo en segundo plano. | Alta |
-| RF-12 | Módulo Headers | Detectar ausencia de: `Content-Security-Policy`, `Strict-Transport-Security`, `X-Frame-Options`, `X-Content-Type-Options`, `X-XSS-Protection`, `Referrer-Policy`. Detectar cookies sin flags `Secure`, `HttpOnly`, `SameSite`. Detectar CORS permisivo (`Access-Control-Allow-Origin: *`). Detectar headers que revelan versiones de servidor. | Alta |
-| RF-13 | Módulo SSL/TLS | Verificar: validez del certificado, fecha de vencimiento (alerta si vence en < 30 días), versión del protocolo (TLS 1.0/1.1 son obsoletos), certificado autofirmado. | Alta |
-| RF-14 | Módulo SQLi | Probar con payloads de SQL Injection error-based (detectar mensajes de error SQL en respuesta) y boolean-based blind (detectar diferencias de contenido con condición verdadera vs falsa). Aplicar a parámetros GET y formularios POST encontrados. | Alta |
-| RF-15 | Módulo XSS | Probar 4 payloads de XSS reflejado en parámetros GET y campos de formulario: `<script>alert(1)</script>`, `"><img src=x onerror=alert(1)>`, `javascript:alert(1)`, `<svg onload=alert(1)>`. Detectar reflejo del payload en la respuesta HTML. | Alta |
-| RF-16 | Módulo CSRF | Detectar formularios POST que no contienen campo oculto con token CSRF (nombres comunes: `csrf_token`, `_token`, `csrfmiddlewaretoken`, `authenticity_token`). Detectar cookies sin atributo `SameSite`. | Alta |
-| RF-17 | Módulo SSRF | Probar inyección de URL interna (`http://169.254.169.254/`, `http://localhost/`) en parámetros de URL comunes: `url`, `redirect`, `callback`, `fetch`, `request`. Detectar respuestas con contenido del servicio de metadatos o localhost. | Alta |
-| RF-18 | Módulo LFI | Probar path traversal en parámetros `file`, `page`, `include`, `path`, `document` con payloads: `../../../etc/passwd`, `....//....//etc/passwd`, `%2e%2e%2f%2e%2e%2fetc/passwd`. Detectar contenido de `/etc/passwd` en la respuesta. | Alta |
-| RF-19 | Módulo Command Injection | Probar parámetros con: `; id`, `| whoami`, `&& id`, `` `id` ``, `$(id)`. Detectar output de comandos del sistema operativo (`uid=`, `root`, `www-data`) en la respuesta. | Alta |
-| RF-20 | Módulo Open Redirect | Probar parámetros `redirect`, `url`, `next`, `return_to`, `goto`, `continue` con URL externa (`https://evil.com`). Detectar redirecciones 301/302 hacia el dominio inyectado. | Media |
-| RF-21 | Módulo Sensitive Files | Verificar accesibilidad de: `.env`, `.git/HEAD`, `phpinfo.php`, `wp-config.php`, `backup.sql`, `database.yml`, `config.php`, `web.config`, `robots.txt`, `sitemap.xml`, `.htaccess`. Reportar archivos con código HTTP 200 que no sean esperados públicamente. | Alta |
-| RF-22 | Módulo HTTP Methods | Enviar petición OPTIONS a la URL objetivo. Detectar si los métodos `PUT`, `DELETE`, `TRACE`, `CONNECT` están habilitados y reportarlos como potencialmente peligrosos. | Media |
-| RF-23 | Módulo Error Disclosure | Provocar respuestas de error (petición malformada, URL inválida) y detectar en la respuesta: stack traces, rutas del sistema de archivos, mensajes de error SQL, versiones de dependencias. | Media |
-| RF-24 | Módulo Crawling | Extraer todos los enlaces (`<a href>`) y formularios (`<form action>`) del HTML de la página objetivo mediante BeautifulSoup. Seguir enlaces internos hasta la profundidad configurada (máx. 3). Retornar lista de URLs descubiertas. | Media |
-| RF-25 | Detección tecnológica | Detectar tecnologías del objetivo mediante cabeceras HTTP, meta tags HTML, nombres de archivos y patrones de respuesta: CMS (WordPress, Joomla, Drupal, Magento), frameworks (Laravel, Django, Rails, Express, ASP.NET), librerías JS (jQuery, React, Vue, Angular), WAF (Cloudflare, Sucuri, ModSecurity), CDN (Cloudflare, Akamai, Fastly). | Media |
-| RF-26 | Estado del escaneo | El sistema debe exponer un endpoint `GET /api/scans/{id}` que retorne el estado del escaneo: `pending`, `running`, `completed`, `failed`, conteo de vulnerabilidades por severidad y lista de vulnerabilidades encontradas. El frontend realiza polling cada 3 segundos hasta que el estado sea `completed` o `failed`. | Alta |
-| RF-27 | Listado de escaneos | El sistema debe exponer un endpoint `GET /api/scans/` que retorne la lista de escaneos del usuario autenticado (paginada: skip/limit), con: URL, estado, total de vulnerabilidades, counts por severidad, duración y fechas. | Alta |
-| RF-28 | Eliminación de escaneo | El usuario puede eliminar un escaneo (y sus vulnerabilidades asociadas) que haya realizado. El administrador puede eliminar cualquier escaneo. | Media |
-| RF-29 | False Positive | El analista o administrador puede marcar una vulnerabilidad como falso positivo (toggle), lo que actualiza el flag `false_positive` en la base de datos. | Baja |
-| RF-30 | Módulos disponibles | El sistema debe exponer un endpoint `GET /api/modules` que liste los 13 módulos disponibles con nombre, ID y descripción. | Baja |
-
-### 3.3. Módulo de Inteligencia Artificial
-
-| **ID** | **Requerimiento** | **Descripción** | **Prioridad** |
-|:-------|:-----------------|:----------------|:-------------:|
-| RF-31 | Análisis por vulnerabilidad | Si `use_ai=true` en el escaneo, el sistema debe llamar a la API de DeepSeek para cada vulnerabilidad encontrada y obtener: `confirmed` (boolean), `false_positive_probability` (0-100), `cvss_score` (0.0-10.0), `cwe_id` (ej: "CWE-89"), `risk_explanation`, `attack_scenario`, `remediation` (immediate, long_term, code_fix adaptado al stack, config_fix), `references`, `estimated_fix_time`. | Alta |
-| RF-32 | Fallback local | Si la API de DeepSeek no está disponible o devuelve error, el sistema debe usar análisis local predefinido para SQLi (CVSS 9.8, CWE-89), XSS (CVSS 7.2, CWE-79) y CSRF (CVSS 6.5, CWE-352). Para otros tipos, retornar análisis genérico con CVSS 5.0. | Alta |
-| RF-33 | Reporte ejecutivo IA | Al completar el escaneo, si `use_ai=true`, el sistema debe generar un reporte ejecutivo con: `risk_score` (0-100), `risk_level` (CRÍTICO/ALTO/MEDIO/BAJO), `executive_summary` (2-3 párrafos para gerencia), `top_threats`, `immediate_actions`, `security_posture`, `compliance_notes` (OWASP/PCI-DSS/ISO27001). | Alta |
-| RF-34 | Solución por tipo | El sistema debe exponer un endpoint `POST /api/solutions/generate` que, dado un tipo de vulnerabilidad y stack tecnológico, retorne una solución técnica completa con código vulnerable, código seguro, pasos de solución y mejores prácticas. | Media |
-| RF-35 | Priorización IA | Las vulnerabilidades encontradas deben ordenarse por severidad (Crítico → Alto → Medio → Bajo → Info) en los resultados del escaneo. | Media |
-
-### 3.4. Módulo de Reportes
-
-| **ID** | **Requerimiento** | **Descripción** | **Prioridad** |
-|:-------|:-----------------|:----------------|:-------------:|
-| RF-36 | Reporte JSON | El endpoint `GET /api/reports/{scan_id}/json` debe retornar todos los datos del escaneo en formato JSON estructurado: metadata del escaneo, tecnologías detectadas, lista completa de vulnerabilidades con análisis IA, conteos por severidad y reporte ejecutivo IA. | Alta |
-| RF-37 | Reporte HTML | El endpoint `GET /api/reports/{scan_id}/html` debe retornar un documento HTML completo con diseño SOC (tema oscuro) que incluya: header con metadata, resumen ejecutivo IA, tabla de vulnerabilidades con badges de severidad, análisis detallado por vulnerabilidad con payloads y evidencias. | Media |
-| RF-38 | Reporte PDF | El endpoint `GET /api/reports/{scan_id}/pdf` debe retornar el reporte en formato PDF generado a partir del HTML mediante WeasyPrint. Si WeasyPrint no está disponible, retornar el HTML como fallback. | Media |
-| RF-39 | Autenticación en reportes | Los endpoints de reporte deben aceptar el token JWT como parámetro de query (`?token=...`) además del header `Authorization`, para facilitar la descarga directa desde el navegador. | Media |
-
-### 3.5. Módulo de Administración
-
-| **ID** | **Requerimiento** | **Descripción** | **Prioridad** |
-|:-------|:-----------------|:----------------|:-------------:|
-| RF-40 | Dashboard de administración | El endpoint `GET /api/admin/dashboard` (solo `admin`) debe retornar: total de usuarios, total de escaneos, total de vulnerabilidades, total de críticas, escaneos recientes (10), actividad reciente de audit_logs (10), datos diarios de escaneos (últimos 7 días), vulnerabilidades por severidad. | Alta |
-| RF-41 | Listado de usuarios | El endpoint `GET /api/admin/users` (solo `admin`) debe retornar la lista paginada de usuarios con: id, username, email, rol, is_active, last_login, last_login_ip, created_at, failed_attempts, estado de bloqueo. | Alta |
-| RF-42 | Cambio de rol | El endpoint `PATCH /api/admin/users/{id}/role` (solo `admin`) debe permitir cambiar el rol de un usuario a `admin`, `analyst` o `user`. | Alta |
-| RF-43 | Activar/Desactivar usuario | El endpoint `PATCH /api/admin/users/{id}/toggle-active` (solo `admin`) debe alternar el estado `is_active` del usuario. Los usuarios inactivos no pueden iniciar sesión. | Alta |
-| RF-44 | Desbloquear usuario | El endpoint `PATCH /api/admin/users/{id}/unlock` (solo `admin`) debe limpiar el contador de intentos fallidos y el campo `locked_until` de un usuario bloqueado por fuerza bruta. | Alta |
-| RF-45 | Eliminar usuario | El endpoint `DELETE /api/admin/users/{id}` (solo `admin`) debe eliminar el usuario y sus datos asociados. No se puede eliminar al propio administrador autenticado. | Alta |
-| RF-46 | Logs de auditoría | El endpoint `GET /api/admin/logs` (solo `admin`) debe retornar los logs de auditoría paginados con filtros opcionales: usuario, acción, resultado (éxito/fallo), rango de fechas. | Media |
-
-### 3.6. Módulo de Dashboard
-
-| **ID** | **Requerimiento** | **Descripción** | **Prioridad** |
-|:-------|:-----------------|:----------------|:-------------:|
-| RF-47 | Estadísticas globales | El dashboard debe mostrar 4 tarjetas de estadísticas: total de escaneos, total de vulnerabilidades, vulnerabilidades críticas, usuarios activos. | Alta |
-| RF-48 | Gráfico de severidades | El dashboard debe mostrar un gráfico de dona (doughnut) con la distribución de vulnerabilidades por severidad (Crítico/Alto/Medio/Bajo). | Alta |
-| RF-49 | Gráfico de escaneos diarios | El dashboard debe mostrar un gráfico de línea con el conteo de escaneos de los últimos 7 días. | Media |
-| RF-50 | Escaneos recientes | El dashboard debe mostrar una tabla con los últimos 10 escaneos: URL, estado, total vulnerabilidades, barra de severidad proporcional, fecha. | Alta |
-| RF-51 | Estado del sistema | El dashboard debe mostrar el estado de los 3 componentes del sistema: API Backend, Base de datos MySQL, IA DeepSeek (conectado/desconectado). | Media |
-
-<div style="page-break-after: always;"></div>
-
----
-
-## 4. Requerimientos No Funcionales
-
-### 4.1. Rendimiento
-
-| **ID** | **Requerimiento** | **Métrica** |
-|:-------|:-----------------|:------------|
-| RNF-01 | Tiempo de respuesta de la API | Los endpoints de autenticación y consulta deben responder en menos de 500 ms en condiciones normales (conexión local al servidor). |
-| RNF-02 | Tiempo de escaneo | Un escaneo con todos los módulos activos (sin IA) debe completarse en menos de 120 segundos para URLs estándar. |
-| RNF-03 | Carga concurrente | El sistema debe soportar al menos 10 usuarios concurrentes realizando escaneos simultáneos sin degradación de rendimiento superior al 20%. |
-| RNF-04 | Tiempo de carga del dashboard | El dashboard debe cargar y renderizar completamente en menos de 3 segundos en una conexión de 10 Mbps. |
-
-### 4.2. Seguridad
-
-| **ID** | **Requerimiento** | **Descripción** |
-|:-------|:-----------------|:----------------|
-| RNF-05 | Cifrado de contraseñas | Todas las contraseñas deben almacenarse con bcrypt con cost factor ≥ 10. Nunca en texto plano. |
-| RNF-06 | JWT seguro | Los tokens JWT deben firmarse con HMAC-SHA256 (HS256), incluir JTI único, expiración de 24 horas y la clave secreta debe tener mínimo 256 bits de entropía. |
-| RNF-07 | HTTPS obligatorio en producción | Todas las comunicaciones en producción deben ser sobre HTTPS. El servidor Nginx debe redirigir HTTP a HTTPS. |
-| RNF-08 | Headers de seguridad | El backend debe incluir en todas las respuestas: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `X-XSS-Protection: 1; mode=block`, `Referrer-Policy: strict-origin-when-cross-origin`. |
-| RNF-09 | Rate limiting | La API debe limitar: endpoint de login a 5 peticiones/minuto por IP, escaneos a 2/minuto por IP, resto de la API a 10 peticiones/segundo por IP. |
-| RNF-10 | CORS | El servidor debe aceptar peticiones CORS únicamente desde los orígenes configurados en `ALLOWED_ORIGINS`. No se admite `*` en producción. |
-| RNF-11 | Variables sensibles | Las credenciales (DATABASE_URL, SECRET_KEY, DEEPSEEK_API_KEY) deben gestionarse en variables de entorno; nunca commiteadas al repositorio. |
-
-### 4.3. Disponibilidad y Confiabilidad
-
-| **ID** | **Requerimiento** | **Descripción** |
-|:-------|:-----------------|:----------------|
-| RNF-12 | Disponibilidad | El sistema debe estar disponible el 99% del tiempo (máximo 7.3 horas de downtime mensual). |
-| RNF-13 | Recuperación automática | El servicio backend (Gunicorn/FastAPI) debe reiniciarse automáticamente si falla, mediante la directiva `Restart=always` del servicio systemd. |
-| RNF-14 | Integridad de datos | Los escaneos interrumpidos por fallo del servidor deben marcarse como `failed` automáticamente en el siguiente inicio del sistema. |
-| RNF-15 | Logging | El sistema debe registrar en logs: inicio/fin de escaneos, errores de módulos, fallos de autenticación, peticiones a la API de IA y respuestas de error HTTP 5xx. |
-
-### 4.4. Usabilidad
-
-| **ID** | **Requerimiento** | **Descripción** |
-|:-------|:-----------------|:----------------|
-| RNF-16 | Interfaz intuitiva | Un usuario con conocimientos básicos de redes debe poder iniciar su primer escaneo en menos de 2 minutos sin necesitar documentación. |
-| RNF-17 | Responsive design | La interfaz debe ser usable en resoluciones desde 1280×800 (desktop) y debe adaptarse para tablets (768×1024). No se requiere compatibilidad con móviles. |
-| RNF-18 | Idioma | La interfaz debe estar en español; los reportes generados también en español. La documentación técnica de la API (Swagger) puede estar en inglés. |
-| RNF-19 | Feedback de progreso | El usuario debe ver indicadores de progreso durante el escaneo (estado: pending/running) con actualización cada 3 segundos. |
-
-### 4.5. Mantenibilidad
-
-| **ID** | **Requerimiento** | **Descripción** |
-|:-------|:-----------------|:----------------|
-| RNF-20 | Modularidad del scanner | Cada módulo de escaneo debe ser una función independiente en `scanner.py` con firma `check_nombre(url) -> List[Dict]`. Añadir un nuevo módulo no debe requerir modificar otros módulos. |
-| RNF-21 | Documentación de API | La API debe documentarse automáticamente con Swagger UI (FastAPI) en `/api/docs` y ReDoc en `/api/redoc`. |
-| RNF-22 | Código limpio | El código Python debe cumplir PEP 8. El TypeScript/React debe seguir las convenciones del linter configurado en el proyecto. |
-| RNF-23 | Control de versiones | Todo el código fuente debe estar versionado en Git con commits descriptivos. El repositorio debe incluir `.gitignore` que excluya `.env`, `venv/`, `node_modules/`, `__pycache__/`. |
-
-### 4.6. Portabilidad
-
-| **ID** | **Requerimiento** | **Descripción** |
-|:-------|:-----------------|:----------------|
-| RNF-24 | Compatibilidad del backend | El backend debe ejecutarse en cualquier sistema Linux con Python 3.11+ y MySQL 8.0, sin dependencias de sistema operativo específico. |
-| RNF-25 | Script de despliegue | El repositorio debe incluir un script `deploy.sh` que automatice la instalación completa del sistema en un VPS Ubuntu 22.04 limpio. |
-| RNF-26 | Variables de entorno | La configuración del sistema (URLs, claves, puertos) debe ser completamente configurable mediante variables de entorno en `.env`, sin modificar código fuente. |
-
-<div style="page-break-after: always;"></div>
-
----
-
-## 5. Casos de Uso
-
-### 5.1. Diagrama de Actores
+### 4. Organigrama
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     Sistema VulnScan Pro                     │
-│                                                             │
-│  ┌──────────┐     ┌───────────┐     ┌──────────────────┐   │
-│  │ Usuario  │     │ Analista  │     │  Administrador   │   │
-│  └────┬─────┘     └─────┬─────┘     └────────┬─────────┘   │
-│       │                 │                     │             │
-│       ▼                 ▼                     ▼             │
-│  - Registrarse     - Todo lo de         - Todo lo de       │
-│  - Iniciar sesión    Usuario +            Analista +        │
-│  - Ver dashboard   - Ver reportes       - Gestionar         │
-│  - Iniciar escaneo - Exportar PDF/JSON    usuarios          │
-│  - Ver resultados  - Análisis IA        - Ver audit logs    │
-│  - Cerrar sesión                        - Cambiar roles     │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│              RECTORADO — Universidad Privada de Tacna         │
+└─────────────────────────┬────────────────────────────────────┘
+                          │
+┌─────────────────────────▼────────────────────────────────────┐
+│              VICERRECTORADO ACADÉMICO                         │
+└─────────────────────────┬────────────────────────────────────┘
+                          │
+┌─────────────────────────▼────────────────────────────────────┐
+│              FACULTAD DE INGENIERÍA                           │
+└─────────────────────────┬────────────────────────────────────┘
+                          │
+┌─────────────────────────▼────────────────────────────────────┐
+│    ESCUELA PROFESIONAL DE INGENIERÍA DE SISTEMAS (EPIS)       │
+│                  Dirección de Escuela                         │
+└──────┬─────────────────────────────────────────┬─────────────┘
+       │                                         │
+┌──────▼──────────────┐             ┌────────────▼─────────────┐
+│  DOCENTES           │             │  ESTUDIANTES             │
+│  Ing. Patrick       │             │  Calloticona M.          │
+│  Cuadros Quiroga    │             │  Ramos M.                │
+│  (Supervisor)       │             │  (Equipo Desarrollador)  │
+└─────────────────────┘             └──────────────────────────┘
 ```
 
-### 5.2. Casos de Uso Principales
+<div style="page-break-after: always;"></div>
 
 ---
 
-**UC-01: Registrar Usuario**
+## II. Visionamiento de la Empresa
 
-| | |
-|:--|:--|
-| **Actor** | Usuario no autenticado |
-| **Precondición** | El usuario no tiene cuenta en el sistema |
-| **Flujo principal** | 1. El usuario accede a `/register`. 2. Completa username, email y contraseña. 3. El sistema valida: username único, email único, contraseña ≥ 8 chars + 1 mayúscula + 1 dígito. 4. Si es el primer usuario, recibe rol `admin`; si no, recibe rol `user`. 5. El sistema almacena la cuenta y devuelve el token JWT. 6. El usuario es redirigido al dashboard. |
-| **Flujo alternativo** | A1: Username o email ya existe → error 400 con mensaje descriptivo. A2: Contraseña inválida → error 400 indicando los requisitos incumplidos. |
-| **Postcondición** | Cuenta creada, usuario autenticado en el sistema. |
+### 1. Descripción del Problema
 
----
+Las aplicaciones web desarrolladas en el ámbito académico de la EPIS-UPT y por PYMES de la región Tacna se despliegan habitualmente sin ningún proceso formal de verificación de seguridad. Esta realidad se debe a tres factores principales:
 
-**UC-02: Iniciar Sesión**
+**Factor 1 — Costo prohibitivo de las herramientas profesionales:** Las soluciones DAST del mercado tienen precios anuales que van desde S/. 1,706 (Burp Suite Pro) hasta S/. 17,100 (Acunetix), completamente fuera del alcance de estudiantes universitarios y pequeñas empresas locales.
 
-| | |
-|:--|:--|
-| **Actor** | Usuario registrado |
-| **Precondición** | El usuario tiene cuenta activa |
-| **Flujo principal** | 1. El usuario ingresa username/email y contraseña. 2. El sistema verifica si la cuenta está bloqueada (`locked_until`). 3. El sistema verifica si la cuenta está activa (`is_active`). 4. El sistema valida la contraseña con bcrypt. 5. Reinicia el contador de intentos fallidos. 6. Registra la sesión en `user_sessions` con IP y User-Agent. 7. Devuelve JWT y datos del usuario (rol, username). |
-| **Flujo alternativo** | A1: Cuenta bloqueada → error 423 con tiempo restante de bloqueo. A2: Contraseña incorrecta → incrementa `failed_login_attempts`; si llega a 5, bloquea por 15 min. A3: Cuenta inactiva → error 403. |
-| **Postcondición** | Usuario autenticado con JWT válido por 24 horas. |
+**Factor 2 — Barrera idiomática y de conocimiento:** La mayoría de herramientas disponibles gratuitas (OWASP ZAP, Nikto) están en inglés, generan resultados técnicos difíciles de interpretar para desarrolladores sin especialización en seguridad, y no ofrecen orientación de remediación contextualizada.
 
----
+**Factor 3 — Ausencia de cultura de seguridad en el ciclo de desarrollo:** Los proyectos académicos y de PYMES locales rara vez incluyen pruebas de seguridad en sus fases de desarrollo. El criterio de "funcionalidad" predomina sobre el de "seguridad", resultando en aplicaciones con vulnerabilidades conocidas que se exponen directamente a internet.
 
-**UC-03: Iniciar Escaneo**
+**Consecuencias:** Aplicaciones en producción con vulnerabilidades críticas (SQL Injection, XSS, CSRF, archivos .env expuestos, cabeceras HTTP ausentes) que pueden ser explotadas por atacantes automatizados para robar datos de usuarios, comprometer servidores o dañar la reputación de las organizaciones.
 
-| | |
-|:--|:--|
-| **Actor** | Usuario, Analista o Administrador autenticado |
-| **Precondición** | Usuario autenticado con token JWT válido |
-| **Flujo principal** | 1. El usuario ingresa la URL objetivo. 2. Selecciona los módulos de análisis (default: todos). 3. Configura opciones avanzadas: profundidad (1-3), timeout (5-60 s), stack tecnológico, activar IA. 4. Presiona "Iniciar Escaneo". 5. El sistema valida la URL (formato HTTP/HTTPS). 6. Crea el registro de escaneo en la BD con estado `pending`. 7. Devuelve el `scan_id` al frontend. 8. Lanza el escaneo como tarea en segundo plano. 9. El frontend inicia polling cada 3 segundos sobre `GET /api/scans/{id}`. |
-| **Flujo alternativo** | A1: URL inválida → error 400. A2: Error en la red durante el escaneo → el escaneo se marca como `failed` con mensaje de error. |
-| **Postcondición** | Escaneo creado y en ejecución. El usuario puede ver el progreso en tiempo real. |
+### 2. Objetivos de Negocios
 
----
+| **#** | **Objetivo de Negocio** | **Indicador de Éxito** |
+|:-----:|:------------------------|:----------------------|
+| OBJ-01 | Proporcionar una herramienta DAST gratuita y accesible para la comunidad académica de la EPIS-UPT | Sistema desplegado en producción y accesible para todos los estudiantes de la escuela |
+| OBJ-02 | Reducir el tiempo de detección de vulnerabilidades web de días a minutos | Tiempo de escaneo completo < 10 minutos para sitios típicos |
+| OBJ-03 | Elevar el estándar de calidad de los proyectos de software de la EPIS mediante la integración de pruebas de seguridad | Al menos el 50% de grupos del curso usen la herramienta para auditar sus proyectos |
+| OBJ-04 | Democratizar el acceso al análisis de seguridad web en la región Tacna | Plataforma disponible públicamente para desarrolladores y PYMES locales |
+| OBJ-05 | Desarrollar competencias técnicas del equipo en ciberseguridad, IA y desarrollo fullstack | Equipo con dominio del stack FastAPI + Next.js + DeepSeek AI + VPS Linux |
 
-**UC-04: Ver Resultados del Escaneo**
+### 3. Objetivos de Diseño
 
-| | |
-|:--|:--|
-| **Actor** | Usuario, Analista o Administrador autenticado |
-| **Precondición** | Existe un escaneo completado del usuario |
-| **Flujo principal** | 1. El usuario hace click en un escaneo de la lista. 2. El sistema muestra la página de detalle con: metadata (URL, duración, fecha), tecnologías detectadas, URLs crawleadas, resumen de vulnerabilidades por severidad. 3. Para cada vulnerabilidad: tipo, severidad, endpoint afectado, payload utilizado, evidencia, descripción del riesgo, solución recomendada. 4. Si tiene análisis IA: CVSS score, CWE ID, escenario de ataque, código de remediación. 5. Si tiene reporte ejecutivo IA: risk score, resumen ejecutivo, amenazas top, acciones inmediatas. |
-| **Flujo alternativo** | A1: El escaneo no pertenece al usuario y no es admin → error 403. |
-| **Postcondición** | El usuario tiene acceso completo a todos los hallazgos del escaneo. |
+| **#** | **Objetivo de Diseño** | **Criterio de Aceptación** |
+|:-----:|:-----------------------|:--------------------------|
+| ODI-01 | Arquitectura desacoplada de 3 capas (presentación, lógica de negocio, datos) | Backend FastAPI independiente del frontend Next.js; comunicación exclusivamente por API REST |
+| ODI-02 | Motor de escaneo modular y extensible | Agregar un nuevo módulo de escaneo requiere solo una función en `scanner.py` sin modificar la arquitectura |
+| ODI-03 | Interfaz intuitiva que permita a un usuario sin experiencia en seguridad realizar su primer escaneo en < 5 minutos | Prueba de usabilidad con 3 usuarios no técnicos |
+| ODI-04 | Sistema seguro que proteja la información de los escaneos | JWT + bcrypt + rate limiting + headers de seguridad + audit logs |
+| ODI-05 | Despliegue reproducible en cualquier VPS Ubuntu 22.04 mediante un solo comando | `bash deploy.sh` en VPS limpio instala y configura todo el sistema |
 
----
+### 4. Alcance del Proyecto
 
-**UC-05: Exportar Reporte**
+**Incluido en el alcance:**
+- Motor DAST con 13 módulos de detección de vulnerabilidades OWASP Top 10:2021
+- Sistema de autenticación y autorización con 3 roles (Admin/Analista/Usuario)
+- Dashboard SOC con estadísticas y gráficos en tiempo real
+- Integración con DeepSeek AI para análisis contextualizado de vulnerabilidades
+- Generación de reportes exportables en PDF, HTML y JSON
+- Panel de administración para gestión de usuarios y audit logs
+- Despliegue en VPS Linux (149.34.48.176) con Nginx, systemd, PM2 y UFW
 
-| | |
-|:--|:--|
-| **Actor** | Analista o Administrador autenticado |
-| **Precondición** | Existe un escaneo completado |
-| **Flujo principal** | 1. El usuario accede al detalle del escaneo. 2. Presiona el botón de descarga (PDF, HTML o JSON). 3. Para PDF/HTML: el sistema genera el documento y lo sirve como archivo descargable. 4. Para JSON: el sistema retorna el JSON completo con todos los datos del escaneo. |
-| **Flujo alternativo** | A1: WeasyPrint no instalado → el sistema ofrece HTML como alternativa al PDF. |
-| **Postcondición** | El usuario descarga el reporte en el formato seleccionado. |
+**Excluido del alcance:**
+- Análisis estático de código fuente (SAST)
+- Pruebas de penetración de infraestructura de red (VAPT)
+- Análisis de aplicaciones móviles (iOS/Android)
+- Pruebas de APIs GraphQL
+- Integración con pipelines CI/CD (GitHub Actions, Jenkins)
+- Soporte multi-tenant para múltiples organizaciones
 
----
+### 5. Viabilidad del Sistema
 
-**UC-06: Gestionar Usuarios (Admin)**
+El sistema es viable en todas sus dimensiones. A continuación se resume la evaluación (detallada en el FD01 — Informe de Factibilidad):
 
-| | |
-|:--|:--|
-| **Actor** | Administrador autenticado |
-| **Precondición** | Usuario autenticado con rol `admin` |
-| **Flujo principal** | 1. El admin accede a `/admin`. 2. Visualiza la tabla de usuarios con estado de cada uno. 3. Puede: cambiar el rol (dropdown en línea), activar/desactivar cuenta (toggle), desbloquear cuenta bloqueada por fuerza bruta, eliminar cuenta. 4. Puede revisar el historial de audit_logs con filtros por acción, usuario y resultado. |
-| **Flujo alternativo** | A1: El admin intenta eliminarse a sí mismo → error 400. |
-| **Postcondición** | Los cambios en usuarios se persisten en la base de datos. |
+| **Dimensión** | **Resultado** | **Indicador clave** |
+|:-------------|:-------------:|:--------------------|
+| Técnica | VIABLE | Stack maduro y open source; equipo con experiencia Python+TypeScript; VPS activo |
+| Económica | VIABLE | Inversión efectiva S/. 148.05; software 100% gratuito; B/C = 35.2 |
+| Operativa | VIABLE | Sistema autónomo con systemd Restart=always; sin administración diaria requerida |
+| Legal | VIABLE | Cumple Ley 30096 y 29733; aviso legal en interfaz; sin ataques destructivos |
+| Social | VIABLE | Beneficia a estudiantes, QA, PYMES de Tacna; democratiza la ciberseguridad |
+| Ambiental | VIABLE | Green IT: stack eficiente; distribución digital; infraestructura compartida |
 
----
+### 6. Información Obtenida del Levantamiento de Información
 
-## 6. Matriz de Trazabilidad
+El levantamiento de información se realizó mediante:
 
-| **Requerimiento** | **Componente** | **Archivo** | **Endpoint / Función** |
-|:------------------|:---------------|:------------|:-----------------------|
-| RF-01 a RF-10 | Backend Auth | `routes/auth_routes.py` | `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me`, `PUT /api/auth/change-password` |
-| RF-11 a RF-30 | Backend Scanner | `scanner.py`, `routes/scan_routes.py` | `POST /api/scans/`, `GET /api/scans/{id}`, `GET /api/scans/` |
-| RF-31 a RF-35 | Backend IA | `ai_service.py`, `solutions_routes.py` | `POST /api/solutions/generate` |
-| RF-36 a RF-39 | Backend Reports | `routes/report_routes.py` | `GET /api/reports/{id}/json`, `GET /api/reports/{id}/html`, `GET /api/reports/{id}/pdf` |
-| RF-40 a RF-46 | Backend Admin | `routes/admin_routes.py` | `GET /api/admin/dashboard`, `GET /api/admin/users`, `PATCH /api/admin/users/{id}/role` |
-| RF-47 a RF-51 | Frontend Dashboard | `app/dashboard/page.tsx` | Componentes: StatCard, Chart, RecentScans |
-| RNF-01 a RNF-04 | Backend Config | `main.py`, `vulnscan-backend.service` | Gunicorn (4 workers), QueuePool MySQL |
-| RNF-05 a RNF-11 | Auth + Config | `auth.py`, `.env`, `nginx.conf` | bcrypt, JWT HS256, Nginx rate limiting |
-| RNF-12 a RNF-15 | Infra | `vulnscan-backend.service`, `deploy.sh` | systemd Restart=always, logging |
-| RNF-20 a RNF-26 | Infra + Code | `scanner.py`, `deploy.sh`, `.env.example` | Arquitectura modular, script despliegue |
+**Análisis de herramientas existentes:**
+- Revisión de OWASP ZAP (open source, complejo, sin IA), Nikto (CLI, sin interfaz), Burp Suite Community (limitado, en inglés) y herramientas comerciales.
+- Conclusión: ninguna herramienta gratuita ofrece interfaz web intuitiva en español + análisis IA + reportes PDF + gestión de usuarios.
 
----
+**Entrevistas informales con estudiantes EPIS:**
+- 8 de 10 estudiantes consultados nunca realizaron pruebas de seguridad a sus proyectos académicos.
+- Los motivos principales: desconocimiento de herramientas, herramientas muy complejas de usar, resultados difíciles de interpretar.
 
-## Conclusiones
+**Análisis de vulnerabilidades reales:**
+- Revisión de 5 sitios web de PYMES de Tacna (con autorización de sus propietarios).
+- Resultado: 4 de 5 presentaban cabeceras de seguridad ausentes; 3 de 5 tenían archivos sensibles expuestos (.env o phpinfo.php); 2 de 5 eran vulnerables a XSS reflejado.
 
-1. El presente documento especifica de forma completa y verificable los **50 requerimientos funcionales** y **26 requerimientos no funcionales** del sistema **VulnScan Pro**, cubriendo todos los módulos de la plataforma.
+**Referencia técnica:**
+- OWASP Top 10:2021 como marco de referencia para los módulos de detección.
+- OWASP Testing Guide v4.2 como metodología de prueba por módulo.
+- CWE/SANS Top 25 para la clasificación estándar de debilidades.
 
-2. La estructura modular del sistema (13 módulos de escaneo independientes, IA con fallback, roles diferenciados) permite que cada requerimiento sea implementado y verificado de forma aislada, facilitando el proceso de pruebas unitarias e integración.
-
-3. Los casos de uso documentados (UC-01 a UC-06) cubren los flujos críticos del sistema y los flujos alternativos de error, proporcionando una guía clara para las pruebas funcionales de aceptación.
-
-4. La matriz de trazabilidad establece la correspondencia directa entre cada requerimiento y su implementación en el código fuente, facilitando la verificación y el mantenimiento del sistema a lo largo del tiempo.
+<div style="page-break-after: always;"></div>
 
 ---
 
-*Documento elaborado por el equipo de desarrollo — Curso Calidad y Pruebas de Software — UPT — 2026*
+## III. Análisis de Procesos
+
+### a) Diagrama del Proceso Actual — Diagrama de Actividades
+
+El proceso actual de verificación de seguridad en proyectos web académicos y de PYMES de Tacna es manual, fragmentado e inconsistente:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│           PROCESO ACTUAL DE VERIFICACIÓN DE SEGURIDAD WEB           │
+└─────────────────────────────────────────────────────────────────────┘
+
+[INICIO]
+   │
+   ▼
+[Desarrollador termina aplicación web]
+   │
+   ▼
+[Decide si hacer pruebas de seguridad]
+   │
+   ├──── NO (80% de los casos) ────────────────────────────────────────┐
+   │                                                                    │
+   ▼                                                                    │
+[SÍ: Busca herramienta manualmente en internet]                       │
+   │                                                                    │
+   ▼                                                                    │
+[Descarga e instala herramienta (OWASP ZAP, Nikto, etc.)]             │
+   │     ~30-60 minutos de instalación y configuración                 │
+   ▼                                                                    │
+[Ejecuta herramienta contra la aplicación]                            │
+   │                                                                    │
+   ▼                                                                    │
+[Recibe reporte en inglés con cientos de resultados técnicos]         │
+   │                                                                    │
+   ▼                                                                    │
+[Intenta interpretar manualmente cada resultado]                       │
+   │     ~2-8 horas para entender y priorizar resultados               │
+   ▼                                                                    │
+[Busca soluciones en Google por cada vulnerabilidad]                  │
+   │     ~1-2 días adicionales de investigación                        │
+   ▼                                                                    │
+[Implementa correcciones (algunas, no todas)]                         │
+   │                                                                    │
+   ▼                                                                    │
+[No tiene reporte formal exportable]  ◄──────────────────────────────-┘
+   │
+   ▼
+[Despliega aplicación a producción SIN auditoría de seguridad]
+   │
+   ▼
+[FIN — Aplicación potencialmente vulnerable en producción]
+```
+
+**Problemas identificados en el proceso actual:**
+- **Tiempo:** El proceso manual consume 2-10 días si se realiza; la mayoría no lo realiza.
+- **Costo:** Las herramientas profesionales son inaccesibles (USD 449-4,500/año).
+- **Barrera idiomática:** Resultados en inglés, difíciles de interpretar sin conocimiento en seguridad.
+- **Sin priorización:** No hay orientación sobre qué vulnerabilidades corregir primero.
+- **Sin reportes formales:** Imposible generar documentación de auditoría para entregar.
+- **Sin seguimiento:** No hay comparación entre versiones para verificar que las correcciones funcionaron.
+
+### b) Diagrama del Proceso Propuesto — Diagrama de Actividades Inicial
+
+Con VulnScan Pro, el proceso de verificación de seguridad se simplifica radicalmente:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│         PROCESO PROPUESTO CON VULNSCAN PRO                          │
+└─────────────────────────────────────────────────────────────────────┘
+
+[INICIO]
+   │
+   ▼
+[Desarrollador termina versión de la aplicación web]
+   │
+   ▼
+[Abre navegador → accede a http://149.34.48.176]
+   │     < 30 segundos
+   ▼
+[Se autentica (login) con sus credenciales JWT]
+   │     < 10 segundos
+   ▼
+[Ingresa URL objetivo + selecciona profundidad + stack tecnológico]
+   │     < 2 minutos de configuración
+   ▼
+[Inicia escaneo → sistema ejecuta 13 módulos OWASP en paralelo]
+   │     < 10 minutos (escaneo completo típico)
+   ▼
+[Dashboard muestra progreso en tiempo real (polling 3s)]
+   │
+   ▼
+[Escaneo completo → resultados con severidad codificada por color]
+   │
+   ├── ¿Vulnerabilidades críticas/altas? ─── SÍ ─────────────────────┐
+   │                                                                    │
+   │                                                                    ▼
+   │                                                          [Revisa detalle de cada vuln]
+   │                                                          [Lee análisis IA: escenario
+   │                                                           de ataque + código de remediación
+   │                                                           para su stack tecnológico]
+   │                                                          [Implementa correcciones]
+   │                                                          [Exporta reporte PDF/HTML/JSON]
+   │                                                          [Re-escanea para verificar]
+   │                                                                    │
+   ▼                                                                    │
+[Exporta reporte formal PDF en español] ◄──────────────────────────────┘
+   │
+   ▼
+[Despliega aplicación a producción CON auditoría de seguridad documentada]
+   │
+   ▼
+[FIN — Aplicación auditada, con reporte formal y vulnerabilidades remediadas]
+```
+
+**Beneficios del proceso propuesto:**
+- **Tiempo:** De 2-10 días a < 15 minutos (configuración + escaneo + revisión).
+- **Costo:** S/. 0.00 en licencias; solo requiere navegador web.
+- **Idioma:** Resultados en español con análisis contextualizado.
+- **Priorización:** Severidad CVSS + risk score global orienta qué corregir primero.
+- **Reportes formales:** PDF/HTML/JSON listos para entregar en auditorías o presentaciones académicas.
+- **Seguimiento:** Historial de escaneos para comparar versiones y verificar remediaciones.
+
+<div style="page-break-after: always;"></div>
+
+---
+
+## IV. Especificación de Requerimientos de Software
+
+### a) Cuadro de Requerimientos Funcionales Inicial
+
+Los requerimientos funcionales iniciales se obtuvieron del levantamiento de información y representan las capacidades básicas identificadas antes del análisis detallado:
+
+| **ID** | **Descripción** | **Prioridad** |
+|:------:|:----------------|:-------------:|
+| RFI-01 | El sistema debe permitir registrar y autenticar usuarios | Alta |
+| RFI-02 | El sistema debe permitir ingresar una URL objetivo para escanear | Alta |
+| RFI-03 | El sistema debe detectar vulnerabilidades web comunes | Alta |
+| RFI-04 | El sistema debe mostrar los resultados de las vulnerabilidades detectadas | Alta |
+| RFI-05 | El sistema debe generar reportes exportables de los resultados | Alta |
+| RFI-06 | El sistema debe tener un panel de administración de usuarios | Media |
+| RFI-07 | El sistema debe mostrar estadísticas de los escaneos realizados | Media |
+| RFI-08 | El sistema debe integrar inteligencia artificial para analizar vulnerabilidades | Media |
+| RFI-09 | El sistema debe mantener un historial de escaneos | Media |
+| RFI-10 | El sistema debe controlar el acceso según el rol del usuario | Alta |
+
+### b) Cuadro de Requerimientos No Funcionales
+
+| **ID** | **Descripción** | **Categoría ISO 25010** | **Prioridad** |
+|:------:|:----------------|:-----------------------:|:-------------:|
+| RNF-01 | El sistema debe cifrar las contraseñas usando bcrypt con factor de costo mínimo 10 | Seguridad | Alta |
+| RNF-02 | El tiempo de respuesta para iniciar un escaneo no debe superar 2 segundos desde el clic | Rendimiento | Alta |
+| RNF-03 | El sistema debe soportar mínimo 10 escaneos simultáneos sin degradación del rendimiento | Rendimiento | Alta |
+| RNF-04 | La interfaz de usuario debe ser intuitiva: un usuario sin experiencia completa su primer escaneo en < 5 min | Usabilidad | Alta |
+| RNF-05 | El sistema debe tener uptime mínimo del 99.5% mensual | Confiabilidad | Alta |
+| RNF-06 | El sistema debe recuperarse automáticamente ante fallos en < 5 segundos (systemd Restart=always) | Confiabilidad | Alta |
+| RNF-07 | Todos los tokens JWT deben expirar en máximo 24 horas y tener JTI único | Seguridad | Alta |
+| RNF-08 | El sistema debe aplicar rate limiting en al menos 3 capas: Nginx, API global y endpoint de login | Seguridad | Alta |
+| RNF-09 | El sistema debe registrar en audit log el 100% de las acciones de autenticación y gestión de escaneos | Seguridad | Alta |
+| RNF-10 | Los módulos de escaneo deben ser independientes entre sí para permitir mantenimiento sin afectar otros | Mantenibilidad | Media |
+| RNF-11 | El sistema debe ser desplegable en cualquier VPS Ubuntu 22.04 LTS mediante un único script (deploy.sh) | Portabilidad | Media |
+| RNF-12 | La tasa de falsos positivos por módulo de escaneo no debe superar el 15% | Confiabilidad | Media |
+| RNF-13 | Todas las comunicaciones en producción deben usar HTTPS (TLS 1.2+) | Seguridad | Alta |
+| RNF-14 | Los reportes PDF deben generarse en menos de 10 segundos para escaneos con hasta 50 vulnerabilidades | Rendimiento | Media |
+| RNF-15 | Toda consulta a la base de datos debe usar SQL parametrizado (ORM SQLAlchemy) — sin concatenación de strings SQL | Seguridad | Alta |
+| RNF-16 | La interfaz debe ser compatible con Chrome 120+, Firefox 120+ y Edge 120+ | Usabilidad | Alta |
+| RNF-17 | El sistema debe aplicar headers de seguridad HTTP en todas las respuestas: CSP, HSTS, X-Frame-Options, X-Content-Type-Options | Seguridad | Alta |
+| RNF-18 | El código fuente del backend debe cumplir con PEP 8 (estilo Python) para facilitar el mantenimiento | Mantenibilidad | Baja |
+| RNF-19 | La base de datos debe soportar 20 conexiones simultáneas (pool_size=10, max_overflow=20) | Rendimiento | Media |
+| RNF-20 | El sistema no debe almacenar credenciales, tokens API ni información sensible en texto plano en el repositorio de código | Seguridad | Alta |
+| RNF-21 | La página de dashboard debe cargar en < 3 segundos en una conexión de 10 Mbps | Rendimiento | Media |
+| RNF-22 | Los módulos de escaneo deben respetar timeouts configurables (5-60 s) para no bloquear el sistema | Rendimiento | Alta |
+| RNF-23 | El sistema debe funcionar sin JavaScript en la capa de datos (Next.js App Router con componentes del servidor) | Usabilidad | Baja |
+| RNF-24 | La documentación del sistema debe seguir las plantillas EPIS-UPT: FD01, FD02, FD03, FD04 | Mantenibilidad | Media |
+| RNF-25 | El sistema debe ser modular para permitir agregar nuevos módulos de escaneo sin modificar la arquitectura base | Mantenibilidad | Media |
+| RNF-26 | El servicio del backend debe ejecutarse con privilegios mínimos: NoNewPrivileges=yes, PrivateTmp=yes (systemd) | Seguridad | Alta |
+| RNF-27 | El firewall UFW debe bloquear todos los puertos excepto 22 (SSH), 80 (HTTP), 443 (HTTPS) desde internet | Seguridad | Alta |
+| RNF-28 | MySQL debe estar accesible únicamente desde localhost (puerto 3306 no expuesto a internet) | Seguridad | Alta |
+| RNF-29 | La API REST debe documentarse automáticamente con OpenAPI/Swagger (disponible en /docs en desarrollo) | Mantenibilidad | Baja |
+| RNF-30 | El sistema debe implementar validación de entrada con Pydantic en todos los endpoints de la API | Seguridad | Alta |
+
+### c) Cuadro de Requerimientos Funcionales Final
+
+Los requerimientos funcionales finales incorporan el análisis completo del sistema y las capacidades identificadas durante el diseño detallado:
+
+#### RF — Módulo de Autenticación y Gestión de Usuarios
+
+| **ID** | **Descripción** | **Actor** | **Prioridad** |
+|:------:|:----------------|:---------:|:-------------:|
+| RF-01 | El sistema debe permitir registrar nuevos usuarios con nombre, email, contraseña (mín. 8 caracteres, 1 número, 1 mayúscula) y rol. La contraseña se hashea con bcrypt (cost ≥ 10) antes de almacenarse. | Administrador / Nuevo Usuario | Alta |
+| RF-02 | El sistema debe autenticar usuarios con email y contraseña, generando un JWT (HS256, 24h expiry, JTI único) y una entrada en la tabla UserSession. | Usuario / Analista / Admin | Alta |
+| RF-03 | El sistema debe bloquear automáticamente la cuenta de un usuario por 15 minutos tras 5 intentos de login fallidos consecutivos, registrando cada intento en AuditLog. | Sistema (automático) | Alta |
+| RF-04 | El sistema debe desbloquear automáticamente la cuenta bloqueada al transcurrir 15 minutos desde el último intento fallido. | Sistema (automático) | Alta |
+| RF-05 | El sistema debe permitir al usuario cerrar su sesión actual (logout), invalidando el JWT en la tabla UserSession (campo `is_active = False`). | Todos los usuarios | Alta |
+| RF-06 | El sistema debe permitir al administrador crear usuarios con roles: Admin, Analista o Usuario. | Administrador | Alta |
+| RF-07 | El sistema debe permitir al administrador editar el nombre, email, rol y estado (activo/bloqueado) de cualquier usuario. | Administrador | Alta |
+| RF-08 | El sistema debe permitir al administrador bloquear o desbloquear manualmente cualquier cuenta de usuario. | Administrador | Alta |
+| RF-09 | El sistema debe permitir al administrador eliminar usuarios, con confirmación previa. Los escaneos del usuario eliminado se conservan en la base de datos con `user_id = NULL`. | Administrador | Media |
+| RF-10 | El sistema debe permitir al usuario solicitar recuperación de contraseña ingresando su email. El sistema genera un token único con expiración de 1 hora. | Todos los usuarios | Media |
+| RF-11 | El sistema debe permitir al usuario cambiar su contraseña usando el token de recuperación, verificando que el token sea válido y no haya expirado. | Todos los usuarios | Media |
+| RF-12 | El sistema debe permitir al usuario autenticado cambiar su contraseña actual ingresando la contraseña actual y la nueva contraseña. | Todos los usuarios | Media |
+| RF-13 | El sistema debe permitir al usuario ver y editar su nombre, email y organización desde su perfil. | Todos los usuarios | Media |
+| RF-14 | El sistema debe mostrar al usuario la lista de sus sesiones activas (dispositivo, IP, fecha de inicio) y permitirle cerrar todas las sesiones simultáneamente. | Todos los usuarios | Media |
+| RF-15 | El sistema debe rechazar con HTTP 403 cualquier solicitud a endpoints protegidos que no incluya un JWT válido y no expirado. | Sistema (automático) | Alta |
+| RF-16 | El sistema debe rechazar con HTTP 403 cualquier solicitud de un usuario a endpoints fuera de su rol (Admin-only, Analista+). | Sistema (automático) | Alta |
+
+#### RF — Módulo de Escaneo de Vulnerabilidades
+
+| **ID** | **Descripción** | **Actor** | **Prioridad** |
+|:------:|:----------------|:---------:|:-------------:|
+| RF-17 | El sistema debe permitir al usuario autenticado iniciar un nuevo escaneo ingresando la URL objetivo (formato: http:// o https://). | Todos los usuarios | Alta |
+| RF-18 | El sistema debe validar que la URL objetivo tenga un formato válido (protocolo HTTP/HTTPS, dominio o IP pública) antes de aceptar el escaneo. | Sistema (automático) | Alta |
+| RF-19 | El sistema debe rechazar el inicio de un escaneo si el usuario ya tiene un escaneo en estado "en progreso" (máximo 1 activo por usuario). | Sistema (automático) | Alta |
+| RF-20 | El sistema debe permitir seleccionar el nivel de profundidad del escaneo: Básico (Headers + SSL + Sensitive Files), Estándar (+ XSS + SQLi + CSRF + HTTP Methods + Error Disclosure), Completo (los 13 módulos). | Todos los usuarios | Alta |
+| RF-21 | El sistema debe permitir seleccionar el stack tecnológico del objetivo para personalizar los payloads y el análisis IA: PHP, Python/Django, Node.js/Express, Java/Spring, Ruby on Rails, ASP.NET Core, Genérico. | Analista / Admin | Media |
+| RF-22 | El sistema debe permitir configurar el timeout por módulo de escaneo: 5, 10, 30 o 60 segundos. | Analista / Admin | Media |
+| RF-23 | El sistema debe permitir habilitar o deshabilitar el análisis por IA (DeepSeek) para cada escaneo. | Todos los usuarios | Media |
+| RF-24 | El sistema debe ejecutar el escaneo en segundo plano (BackgroundTasks) para no bloquear la interfaz de usuario durante el proceso. | Sistema (automático) | Alta |
+| RF-25 | El módulo de SQL Injection debe probar payloads de inyección SQL error-based (`'`, `' OR 1=1--`), boolean-based (`' AND 1=1`, `' AND 1=2`) y UNION-based en todos los parámetros GET y campos de formulario encontrados. | Sistema (automático) | Alta |
+| RF-26 | El módulo de XSS debe probar payloads de script inyectado (`<script>alert(1)</script>`, `"><img src=x onerror=alert(1)>`) en parámetros GET y campos de formulario, verificando si el payload aparece sin escapar en la respuesta. | Sistema (automático) | Alta |
+| RF-27 | El módulo de CSRF debe verificar la presencia de tokens CSRF en formularios POST y el atributo SameSite=Strict/Lax en cookies de sesión. | Sistema (automático) | Alta |
+| RF-28 | El módulo de SSRF debe probar redirecciones hacia recursos internos (`http://127.0.0.1`, `http://169.254.169.254`, `http://localhost`) en parámetros de URL. | Sistema (automático) | Alta |
+| RF-29 | El módulo de LFI debe probar secuencias de path traversal (`../../../../etc/passwd`, `..%2F..%2Fetc%2Fshadow`) en parámetros de archivo. | Sistema (automático) | Alta |
+| RF-30 | El módulo de Command Injection debe probar inyecciones de comandos OS (`;ls`, `|id`, `&&whoami`) en parámetros de entrada. | Sistema (automático) | Alta |
+| RF-31 | El módulo de Open Redirect debe detectar parámetros de redirección (redirect, url, next, return) y probar si permiten redirigir a dominios externos arbitrarios. | Sistema (automático) | Media |
+| RF-32 | El módulo de Security Headers debe verificar la presencia y configuración correcta de: Content-Security-Policy, Strict-Transport-Security, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy. | Sistema (automático) | Alta |
+| RF-33 | El módulo de SSL/TLS debe verificar: soporte de TLS 1.0/1.1 (deprecados), fechas de validez del certificado, uso de algoritmos de cifrado débiles (RC4, DES, 3DES, MD5). | Sistema (automático) | Alta |
+| RF-34 | El módulo de Sensitive Files debe verificar la accesibilidad de al menos 20 rutas comunes: `.env`, `.git/config`, `phpinfo.php`, `wp-config.php`, `.htpasswd`, `web.config`, `backup.sql`, `db_backup.zip`, `admin/`, `phpmyadmin/`, etc. | Sistema (automático) | Alta |
+| RF-35 | El módulo de HTTP Methods debe verificar si métodos peligrosos están habilitados: PUT, DELETE, TRACE, CONNECT, PATCH (cuando no es esperado). | Sistema (automático) | Media |
+| RF-36 | El módulo de Error Disclosure debe verificar si respuestas de error (404, 500) revelan información interna: stack traces, versiones de framework, paths absolutos del servidor, cadenas de conexión. | Sistema (automático) | Media |
+| RF-37 | El módulo de Web Crawling debe descubrir URLs internas de la aplicación rastreando los links HTML de la página principal hasta 2 niveles de profundidad. | Sistema (automático) | Media |
+| RF-38 | El sistema debe calcular un risk score global (0-100) para cada escaneo basado en el número y severidad de las vulnerabilidades detectadas: Crítica=10pts, Alta=7pts, Media=3pts, Baja=1pt. | Sistema (automático) | Alta |
+| RF-39 | El sistema debe clasificar cada vulnerabilidad detectada con nivel de severidad: Crítica, Alta, Media, Baja o Informativa, según los criterios CVSS. | Sistema (automático) | Alta |
+| RF-40 | El sistema debe actualizar el estado del escaneo en tiempo real: Pendiente → En Progreso → Completado (o Fallido), almacenado en la base de datos para polling del frontend. | Sistema (automático) | Alta |
+| RF-41 | El sistema debe registrar el tiempo de inicio y fin de cada escaneo, calculando la duración total. | Sistema (automático) | Media |
+| RF-42 | El sistema debe registrar el número total de URLs encontradas durante el crawling y el número de URLs probadas por cada módulo. | Sistema (automático) | Baja |
+
+#### RF — Módulo de Inteligencia Artificial (DeepSeek AI)
+
+| **ID** | **Descripción** | **Actor** | **Prioridad** |
+|:------:|:----------------|:---------:|:-------------:|
+| RF-43 | El sistema debe enviar cada vulnerabilidad detectada a la API DeepSeek AI para obtener: puntuación CVSS v3.1, vector CVSS, identificador CWE, escenario de ataque detallado y código de remediación específico para el stack seleccionado. | Sistema (automático) | Alta |
+| RF-44 | El sistema debe generar un reporte ejecutivo global del escaneo usando DeepSeek AI: risk score (0-100), nivel de riesgo (Crítico/Alto/Medio/Bajo/Seguro), resumen ejecutivo, top 3 vulnerabilidades más críticas y plan de acción priorizado. | Sistema (automático) | Alta |
+| RF-45 | El sistema debe incluir una estimación de probabilidad de falso positivo (0-100%) por cada vulnerabilidad en el análisis IA. | Sistema (automático) | Media |
+| RF-46 | El sistema debe implementar un fallback local cuando la API DeepSeek no esté disponible, proporcionando análisis predefinidos para: SQL Injection (CWE-89), XSS (CWE-79) y CSRF (CWE-352). | Sistema (automático) | Alta |
+| RF-47 | El sistema debe indicar claramente en la interfaz si el análisis IA proviene de DeepSeek (análisis personalizado) o del fallback local (análisis genérico). | Sistema (automático) | Media |
+
+#### RF — Módulo de Reportes
+
+| **ID** | **Descripción** | **Actor** | **Prioridad** |
+|:------:|:----------------|:---------:|:-------------:|
+| RF-48 | El sistema debe generar reportes en formato PDF usando WeasyPrint, incluyendo: portada con logo, metadatos del escaneo (URL, fecha, duración, módulos ejecutados), tabla de vulnerabilidades por severidad, descripción técnica completa, análisis IA y risk score visual. | Todos los usuarios | Alta |
+| RF-49 | El sistema debe generar reportes en formato HTML navegable con los mismos datos que el PDF, pero con tabla de contenidos clickeable y diseño responsivo. | Todos los usuarios | Media |
+| RF-50 | El sistema debe generar reportes en formato JSON estructurado con todos los datos del escaneo y vulnerabilidades, para integración en sistemas externos o pipelines CI/CD. | Analista / Admin | Media |
+| RF-51 | El sistema debe almacenar los reportes generados en la base de datos con metadatos: tipo (PDF/HTML/JSON), tamaño, fecha de generación y usuario que lo generó. | Sistema (automático) | Media |
+| RF-52 | El sistema debe permitir descargar un reporte directamente desde la vista de detalle del escaneo o desde el historial de escaneos. | Todos los usuarios | Alta |
+
+#### RF — Módulo de Dashboard y Visualización
+
+| **ID** | **Descripción** | **Actor** | **Prioridad** |
+|:------:|:----------------|:---------:|:-------------:|
+| RF-53 | El dashboard debe mostrar contadores animados: total de escaneos realizados, total de vulnerabilidades críticas detectadas, total de sitios distintos analizados y risk score promedio del mes. | Todos los usuarios | Alta |
+| RF-54 | El dashboard debe mostrar un gráfico de dona (Chart.js) con la distribución de vulnerabilidades por severidad (Crítica/Alta/Media/Baja/Informativa) de los últimos 30 días. | Todos los usuarios | Alta |
+| RF-55 | El dashboard debe mostrar un gráfico de línea temporal (Chart.js) con la cantidad de vulnerabilidades detectadas por día en los últimos 7 días. | Todos los usuarios | Media |
+| RF-56 | El dashboard debe mostrar una tabla de los últimos 10 escaneos realizados con: URL objetivo, estado, fecha, número de vulnerabilidades y link al detalle. | Todos los usuarios | Alta |
+| RF-57 | El sistema debe actualizar automáticamente las estadísticas del dashboard cada 60 segundos sin recargar la página. | Sistema (automático) | Media |
+| RF-58 | El sistema debe mostrar el estado de un escaneo en progreso con barra de progreso y nombre del módulo actual (polling cada 3 segundos). | Todos los usuarios | Alta |
+
+#### RF — Módulo de Administración
+
+| **ID** | **Descripción** | **Actor** | **Prioridad** |
+|:------:|:----------------|:---------:|:-------------:|
+| RF-59 | El panel de administración debe mostrar la lista de todos los usuarios registrados con: nombre, email, rol, estado (activo/bloqueado), número de escaneos y última actividad. | Administrador | Alta |
+| RF-60 | El panel de administración debe mostrar todos los escaneos de todos los usuarios con filtros por: estado, usuario, rango de fechas y URL objetivo. | Administrador | Alta |
+| RF-61 | El panel de administración debe mostrar el audit log completo con paginación (20 registros/página) y filtros por: usuario, acción, fecha y nivel de resultado. | Administrador | Alta |
+| RF-62 | El sistema debe registrar en audit log toda acción del sistema: login, logout, inicio de escaneo, exportación de reporte, creación/edición/eliminación de usuario, cambio de rol, bloqueo/desbloqueo de cuenta. | Sistema (automático) | Alta |
+| RF-63 | El panel de administración debe mostrar estadísticas globales: total de usuarios activos, total de escaneos del sistema, total de vulnerabilidades detectadas acumuladas, distribución por tipo y severidad. | Administrador | Media |
+
+#### RF — Módulo de Historial de Escaneos
+
+| **ID** | **Descripción** | **Actor** | **Prioridad** |
+|:------:|:----------------|:---------:|:-------------:|
+| RF-64 | El sistema debe mostrar al usuario autenticado su historial paginado de escaneos (20/página) con: URL objetivo, fecha/hora, duración, vulnerabilidades por severidad, estado y risk score. | Todos los usuarios | Alta |
+| RF-65 | El sistema debe permitir filtrar el historial por: estado del escaneo (todos/completado/en progreso/fallido), URL objetivo (búsqueda parcial) y rango de fechas. | Todos los usuarios | Media |
+| RF-66 | El sistema debe permitir al usuario eliminar un escaneo de su historial (con confirmación previa), eliminando en cascada sus vulnerabilidades y reportes asociados. | Todos los usuarios | Media |
+| RF-67 | El sistema debe permitir al usuario acceder al reporte detallado de cualquier escaneo pasado de su historial. | Todos los usuarios | Alta |
+
+### d) Reglas de Negocio
+
+| **ID** | **Regla de Negocio** | **Descripción** | **Módulo afectado** |
+|:------:|:--------------------|:----------------|:--------------------|
+| RN-01 | Uso solo con autorización | El usuario debe declarar explícitamente poseer autorización sobre la aplicación objetivo antes de iniciar cualquier escaneo. Aceptar los términos es obligatorio en el registro y en cada escaneo. | Escaneo |
+| RN-02 | Un escaneo activo por usuario | Un usuario solo puede tener 1 escaneo en estado "en progreso" simultáneamente. Intentar iniciar un segundo escaneo devuelve error HTTP 409 (Conflict). | Escaneo |
+| RN-03 | Contraseñas con requisitos mínimos | Las contraseñas deben tener mínimo 8 caracteres, al menos 1 letra mayúscula y al menos 1 dígito numérico. Contraseñas que no cumplen son rechazadas con HTTP 422. | Autenticación |
+| RN-04 | Bloqueo por fuerza bruta | Tras 5 intentos de login fallidos consecutivos para la misma cuenta, la cuenta se bloquea automáticamente por 15 minutos. El contador se resetea al iniciar sesión exitosamente. | Autenticación |
+| RN-05 | JWT con expiración fija | Los tokens JWT tienen vida máxima de 24 horas. Tokens expirados son rechazados con HTTP 401 independientemente del estado de la sesión en base de datos. | Autenticación |
+| RN-06 | Sin escaneos de redes privadas | El sistema rechaza URLs con rangos de IP privados: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 127.0.0.0/8, 169.254.0.0/16 (link-local). Solo se permiten direcciones IP públicas y dominios resolvibles. | Escaneo |
+| RN-07 | Sin modificaciones al objetivo | Los módulos de escaneo solo realizan operaciones GET (lectura) o POST de prueba con payloads inofensivos. Ningún módulo elimina, modifica ni crea datos en el objetivo. | Escaneo |
+| RN-08 | Timeout obligatorio | Cada módulo de escaneo debe completarse dentro del timeout configurado (5-60 s). Si el módulo supera el timeout, se registra como "timeout" en los resultados y el sistema continúa con el siguiente módulo. | Escaneo |
+| RN-09 | Severidad por CVSS | La severidad de cada vulnerabilidad se clasifica según los rangos CVSS v3.1: Crítica (9.0-10.0), Alta (7.0-8.9), Media (4.0-6.9), Baja (0.1-3.9), Informativa (0.0). | Resultados |
+| RN-10 | Audit log inmutable | Los registros del audit log no pueden ser editados, eliminados ni modificados por ningún usuario, incluido el administrador. Son de solo lectura. | Auditoría |
+| RN-11 | Retención de audit logs | Los registros del audit log se retienen por un mínimo de 90 días desde su creación. Registros más antiguos pueden archivarse automáticamente. | Auditoría |
+| RN-12 | Reportes asociados a escaneos | Un reporte solo puede generarse cuando el escaneo asociado tiene estado "completado". No se pueden generar reportes de escaneos en progreso o fallidos. | Reportes |
+| RN-13 | Contraseñas no visibles | Las contraseñas no se almacenan en ningún log, auditoría, respuesta de API ni variable de entorno en texto plano. Solo el hash bcrypt se almacena. | Seguridad |
+| RN-14 | Variables sensibles en .env | DATABASE_URL, SECRET_KEY y DEEPSEEK_API_KEY solo pueden estar en el archivo `.env`. El archivo `.env` está excluido del repositorio de código mediante `.gitignore`. | Seguridad |
+| RN-15 | Validación de entrada obligatoria | Todos los endpoints de la API deben validar sus parámetros de entrada con esquemas Pydantic antes de procesarlos. Datos inválidos retornan HTTP 422 con descripción del error de validación. | API |
+| RN-16 | Risk score compuesto | El risk score global de un escaneo se calcula como: `min(100, Σ(Críticas×10 + Altas×7 + Medias×3 + Bajas×1))`. Un sitio sin vulnerabilidades tiene risk score 0. | Resultados |
+| RN-17 | Fallback AI obligatorio | Si la API DeepSeek falla, el sistema no debe mostrar error al usuario; debe proporcionar análisis predefinido para los tipos de vulnerabilidades conocidos y marcarlo como "análisis local". | IA |
+| RN-18 | Roles escalables | El sistema permite asignar a cada usuario exactamente un rol. Un administrador no puede quitarse el rol Admin a sí mismo (previene quedarse sin administradores en el sistema). | Usuarios |
+
+<div style="page-break-after: always;"></div>
+
+---
+
+## V. Fase de Desarrollo
+
+### 1. Perfiles de Usuario
+
+#### Perfil 1: Administrador del Sistema
+
+| **Atributo** | **Descripción** |
+|:------------|:----------------|
+| **Rol en el sistema** | Administrador |
+| **Descripción** | Usuario con control total sobre la plataforma VulnScan Pro. Gestiona usuarios, accede a todos los escaneos, revisa audit logs y configura el sistema. Típicamente el desarrollador o el encargado de TI de la organización que usa la plataforma. |
+| **Conocimiento técnico** | Alto — ingeniería de sistemas, ciberseguridad, administración de sistemas |
+| **Frecuencia de uso** | Semanal (revisión de audit logs, gestión de usuarios) |
+| **Permisos** | CRUD completo de usuarios, lectura de todos los escaneos, acceso al audit log, estadísticas globales, configuración del sistema |
+| **Restricciones** | No puede editarse el rol Admin a sí mismo; no puede eliminar el último administrador del sistema |
+
+#### Perfil 2: Analista de Seguridad
+
+| **Atributo** | **Descripción** |
+|:------------|:----------------|
+| **Rol en el sistema** | Analista |
+| **Descripción** | Usuario con experiencia técnica en seguridad o desarrollo. Ejecuta escaneos configurados con parámetros avanzados (stack, timeout, profundidad), interpreta resultados detallados y genera reportes formales para auditorías o presentaciones. |
+| **Conocimiento técnico** | Intermedio-Alto — desarrollo web, fundamentos de seguridad, familiaridad con OWASP |
+| **Frecuencia de uso** | Diaria/Semanal (auditorías de proyectos en desarrollo) |
+| **Permisos** | Crear y gestionar sus propios escaneos, configuración avanzada, acceso a análisis IA, exportar reportes PDF/HTML/JSON, ver historial propio |
+| **Restricciones** | Solo ve sus propios escaneos (no los de otros usuarios); máximo 1 escaneo simultáneo |
+
+#### Perfil 3: Usuario Regular
+
+| **Atributo** | **Descripción** |
+|:------------|:----------------|
+| **Rol en el sistema** | Usuario |
+| **Descripción** | Desarrollador o estudiante sin especialización en seguridad. Usa la plataforma para obtener un diagnóstico rápido de sus proyectos antes de entregarlos o desplegarlos. Necesita una interfaz sencilla y resultados claros en español. |
+| **Conocimiento técnico** | Básico-Intermedio — desarrollo web, sin especialización en seguridad |
+| **Frecuencia de uso** | Ocasional (antes de entregas o despliegues) |
+| **Permisos** | Crear escaneos básicos (sin configuración avanzada de stack/timeout), ver resultados, exportar reporte PDF básico, ver historial propio |
+| **Restricciones** | Solo ve sus propios escaneos; máximo 1 escaneo simultáneo; sin acceso a configuración avanzada |
+
+---
+
+### 2. Modelo Conceptual
+
+#### a) Diagrama de Paquetes
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                    VulnScan Pro — Sistema                     │
+│                                                              │
+│  ┌─────────────────┐    ┌──────────────────────────────────┐ │
+│  │   «package»     │    │         «package»                │ │
+│  │   Frontend      │    │         Backend API              │ │
+│  │   (Next.js 16)  │◄──►│         (FastAPI)                │ │
+│  │                 │    │                                  │ │
+│  │ + Dashboard     │    │ + auth_routes.py                 │ │
+│  │ + Scanner       │    │ + scan_routes.py                 │ │
+│  │ + Admin         │    │ + admin_routes.py                │ │
+│  │ + Reports       │    │ + report_routes.py               │ │
+│  │ + Profile       │    │ + solutions_routes.py            │ │
+│  └─────────────────┘    └──────────────┬─────────────────┘ │
+│                                         │                    │
+│           ┌─────────────────────────────▼──────────────────┐ │
+│           │              «package»                         │ │
+│           │         Servicios del Sistema                  │ │
+│           │                                                │ │
+│           │  ┌──────────────┐  ┌──────────────────────┐   │ │
+│           │  │ «component» │  │    «component»        │   │ │
+│           │  │  scanner.py  │  │  ai_service.py        │   │ │
+│           │  │ (13 módulos) │  │  (DeepSeek API)       │   │ │
+│           │  └──────────────┘  └──────────────────────┘   │ │
+│           │                                                │ │
+│           │  ┌──────────────┐  ┌──────────────────────┐   │ │
+│           │  │ «component» │  │    «component»        │   │ │
+│           │  │    auth.py   │  │    models.py          │   │ │
+│           │  │  (JWT+bcrypt)│  │  (SQLAlchemy ORM)     │   │ │
+│           │  └──────────────┘  └──────────────────────┘   │ │
+│           └────────────────────────────────────────────────┘ │
+│                                         │                    │
+│           ┌─────────────────────────────▼──────────────────┐ │
+│           │              «package»                         │ │
+│           │           Base de Datos                        │ │
+│           │         MySQL 8.0 — 7 tablas                   │ │
+│           └────────────────────────────────────────────────┘ │
+└──────────────────────────────────────────────────────────────┘
+```
+
+#### b) Diagrama de Casos de Uso
+
+**Actores del sistema:**
+- **Usuario** (hereda de: Sistema)
+- **Analista** (extiende Usuario — con permisos adicionales de configuración avanzada)
+- **Administrador** (extiende Analista — con permisos completos)
+- **Sistema** (actor interno — ejecuta escaneos en background y audita acciones)
+- **DeepSeek AI** (actor externo — servicio de IA para análisis de vulnerabilidades)
+
+**Casos de uso principales:**
+
+```
+                    ┌──────────────────────────────────────────────────┐
+                    │              Sistema VulnScan Pro                 │
+                    │                                                    │
+  ┌──────────┐     │  ┌──────────────────┐  ┌───────────────────────┐ │
+  │          │     │  │ UC-01: Registrarse│  │ UC-02: Iniciar Sesión │ │
+  │  Usuario │─────┼─►│                  │  │                       │ │
+  │          │     │  └──────────────────┘  └───────────────────────┘ │
+  └──────────┘     │                                                    │
+       │           │  ┌──────────────────┐  ┌───────────────────────┐ │
+       │           │  │ UC-03: Iniciar   │  │ UC-04: Ver Resultado  │ │
+       └───────────┼─►│ Escaneo          │  │ de Escaneo            │ │
+                   │  └──────────────────┘  └───────────────────────┘ │
+  ┌──────────┐     │                                                    │
+  │          │     │  ┌──────────────────┐  ┌───────────────────────┐ │
+  │ Analista │─────┼─►│ UC-05: Configurar│  │ UC-06: Exportar       │ │
+  │          │     │  │ Escaneo Avanzado │  │ Reporte PDF/HTML/JSON │ │
+  └──────────┘     │  └──────────────────┘  └───────────────────────┘ │
+       │           │                                                    │
+       │           │  ┌──────────────────┐  ┌───────────────────────┐ │
+       │           │  │ UC-07: Ver       │  │ UC-08: Gestionar      │ │
+       │           │  │ Historial Escan. │  │ Mi Perfil             │ │
+       │           │  └──────────────────┘  └───────────────────────┘ │
+  ┌──────────┐     │                                                    │
+  │          │     │  ┌──────────────────┐  ┌───────────────────────┐ │
+  │  Admin   │─────┼─►│ UC-09: Gestionar │  │ UC-10: Ver Audit Log  │ │
+  │          │     │  │ Usuarios         │  │                       │ │
+  └──────────┘     │  └──────────────────┘  └───────────────────────┘ │
+                   │                                                    │
+  ┌──────────┐     │  ┌──────────────────┐  ┌───────────────────────┐ │
+  │ Sistema  │─────┼─►│ UC-11: Ejecutar  │  │ UC-12: Analizar con  │ │
+  │(interno) │     │  │ Módulos OWASP    │  │ DeepSeek AI           │ │
+  └──────────┘     │  └──────────────────┘  └───────────────────────┘ │
+                   │                                                    │
+  ┌──────────┐     │  ┌──────────────────┐                            │
+  │DeepSeek  │─────┼─►│ UC-13: Generar   │                            │
+  │   AI     │     │  │ Análisis IA      │                            │
+  └──────────┘     │  └──────────────────┘                            │
+                   └──────────────────────────────────────────────────┘
+```
+
+#### c) Escenarios de Caso de Uso (Narrativa)
+
+---
+
+**Caso de Uso: UC-01 — Registrarse en el Sistema**
+
+| **Campo** | **Descripción** |
+|:---------|:----------------|
+| **Nombre** | Registrarse en el Sistema |
+| **ID** | UC-01 |
+| **Actor principal** | Usuario no autenticado |
+| **Precondición** | El usuario no posee una cuenta en el sistema |
+| **Postcondición** | El usuario tiene una cuenta activa con rol "usuario" y puede iniciar sesión |
+| **Flujo Principal** | 1. El usuario navega a la página de registro. 2. Ingresa nombre completo, email y contraseña (mín. 8 chars, 1 número, 1 mayúscula). 3. Lee y acepta los términos de uso (incluye aviso legal de uso autorizado). 4. El sistema valida el formato de email y los requisitos de contraseña. 5. El sistema verifica que el email no esté registrado previamente. 6. El sistema hashea la contraseña con bcrypt (cost=10). 7. El sistema crea el usuario en la base de datos con rol "usuario" y estado "activo". 8. El sistema redirige al usuario a la pantalla de login. |
+| **Flujo Alternativo A** | 4a. El email ya está registrado: el sistema muestra "Email ya registrado". 4b. La contraseña no cumple los requisitos: muestra los requisitos específicos incumplidos. |
+| **Flujo de Excepción** | Error de base de datos: el sistema muestra "Error de registro, intente de nuevo". |
+| **Reglas de negocio** | RN-03 (contraseñas), RN-01 (términos de uso), RN-13 (contraseñas no visibles) |
+
+---
+
+**Caso de Uso: UC-02 — Iniciar Sesión**
+
+| **Campo** | **Descripción** |
+|:---------|:----------------|
+| **Nombre** | Iniciar Sesión |
+| **ID** | UC-02 |
+| **Actor principal** | Usuario registrado |
+| **Precondición** | El usuario posee cuenta activa y no bloqueada |
+| **Postcondición** | El usuario está autenticado con un JWT válido y sesión activa en la base de datos |
+| **Flujo Principal** | 1. El usuario ingresa email y contraseña en el formulario de login. 2. El sistema verifica si la cuenta existe y no está bloqueada. 3. El sistema verifica la contraseña contra el hash bcrypt. 4. El sistema genera un JWT (HS256, 24h, JTI único). 5. El sistema crea una entrada en UserSession (user_id, jti, ip, user_agent, is_active=True). 6. El sistema registra el evento en AuditLog (action="login_success"). 7. El sistema retorna el JWT al cliente. 8. El frontend almacena el JWT y redirige al dashboard. |
+| **Flujo Alternativo A** | 3a. Contraseña incorrecta: el sistema incrementa `failed_login_attempts`. Si llega a 5, bloquea la cuenta por 15 minutos (RN-04). Registra en AuditLog. |
+| **Flujo Alternativo B** | 2a. Cuenta bloqueada: muestra "Cuenta bloqueada. Intente de nuevo en X minutos." |
+| **Reglas de negocio** | RN-04 (bloqueo), RN-05 (JWT 24h), RN-09 |
+
+---
+
+**Caso de Uso: UC-03 — Iniciar Escaneo de Vulnerabilidades**
+
+| **Campo** | **Descripción** |
+|:---------|:----------------|
+| **Nombre** | Iniciar Escaneo |
+| **ID** | UC-03 |
+| **Actor principal** | Usuario / Analista / Administrador |
+| **Actor secundario** | Sistema (ejecución de módulos en background) |
+| **Precondición** | El usuario está autenticado. No tiene ningún escaneo en estado "en progreso". |
+| **Postcondición** | Un nuevo escaneo fue creado en la base de datos con estado "en progreso" y se ejecuta en background |
+| **Flujo Principal** | 1. El usuario navega a la pantalla del escáner. 2. Ingresa la URL objetivo (ej: https://mi-proyecto.com). 3. Selecciona el nivel de profundidad (Básico/Estándar/Completo). 4. (Opcional — Analista+) Selecciona el stack tecnológico y configura timeout. 5. (Opcional) Habilita el análisis por IA. 6. Lee y acepta el aviso legal de uso autorizado. 7. Hace clic en "Iniciar Escaneo". 8. El sistema valida la URL (formato, no es IP privada). 9. El sistema verifica que no hay escaneo activo del usuario (RN-02). 10. El sistema crea un registro Scan en la base de datos (estado="pending"). 11. El sistema dispara la ejecución en background (BackgroundTasks). 12. El sistema retorna el scan_id al cliente con HTTP 202. 13. El frontend redirige al usuario a la pantalla de monitoreo con polling cada 3s. |
+| **Flujo Alternativo A** | 8a. URL con formato inválido: HTTP 422 con descripción del error de validación. |
+| **Flujo Alternativo B** | 8b. URL es IP privada: HTTP 400 "No se permiten escaneos a redes privadas". |
+| **Flujo Alternativo C** | 9a. Ya hay escaneo activo: HTTP 409 "Ya tiene un escaneo en progreso". |
+| **Reglas de negocio** | RN-01, RN-02, RN-06, RN-07, RN-08 |
+
+---
+
+**Caso de Uso: UC-04 — Ver Resultados de Escaneo**
+
+| **Campo** | **Descripción** |
+|:---------|:----------------|
+| **Nombre** | Ver Resultados de Escaneo |
+| **ID** | UC-04 |
+| **Actor principal** | Usuario / Analista / Administrador |
+| **Precondición** | Existe un escaneo completado asociado al usuario |
+| **Postcondición** | El usuario visualiza las vulnerabilidades detectadas con su análisis completo |
+| **Flujo Principal** | 1. El usuario accede al detalle del escaneo (desde historial o desde monitoreo al completarse). 2. El sistema carga las vulnerabilidades del escaneo desde la base de datos. 3. El sistema calcula y muestra el risk score global. 4. El sistema muestra la lista de vulnerabilidades ordenadas por severidad (Crítica → Informativa). 5. Cada vulnerabilidad muestra: nombre, módulo de origen, severidad (badge color), URL/parámetro afectado, descripción técnica, payload de prueba (PoC). 6. El usuario hace clic en una vulnerabilidad para ver su detalle completo. 7. Si el escaneo tuvo análisis IA habilitado, el usuario ve la pestaña "Análisis IA" con: CVSS score, vector, CWE, escenario de ataque, código de remediación para el stack del proyecto. 8. El usuario puede filtrar vulnerabilidades por severidad, módulo o estado. |
+| **Flujo Alternativo A** | El escaneo no tiene vulnerabilidades: muestra "No se detectaron vulnerabilidades. Risk Score: 0". |
+| **Flujo Alternativo B** | El análisis IA no está disponible para esa vulnerabilidad: muestra análisis del fallback local marcado como "Análisis Local". |
+| **Reglas de negocio** | RN-09, RN-16, RN-17 |
+
+---
+
+**Caso de Uso: UC-09 — Gestionar Usuarios (Administración)**
+
+| **Campo** | **Descripción** |
+|:---------|:----------------|
+| **Nombre** | Gestionar Usuarios |
+| **ID** | UC-09 |
+| **Actor principal** | Administrador |
+| **Precondición** | El usuario tiene rol Administrador y está autenticado |
+| **Postcondición** | El estado de los usuarios del sistema refleja los cambios realizados |
+| **Flujo Principal** | 1. El administrador accede al Panel de Administración → sección Usuarios. 2. El sistema muestra la lista paginada de todos los usuarios. 3. El administrador puede: (a) Crear nuevo usuario con nombre/email/contraseña/rol; (b) Editar datos de un usuario existente; (c) Cambiar el rol de un usuario; (d) Bloquear/desbloquear cuenta manualmente; (e) Eliminar usuario con confirmación. 4. Cada acción se registra en AuditLog con la acción específica, usuario afectado e IP del administrador. |
+| **Flujo Alternativo A** | Intentar eliminar el último administrador: el sistema rechaza con "No se puede eliminar el último administrador". |
+| **Flujo Alternativo B** | Intentar asignarse a sí mismo un rol diferente a Admin: el sistema rechaza con "No puede cambiar su propio rol" (RN-18). |
+| **Reglas de negocio** | RN-10, RN-18 |
+
+---
+
+### 3. Modelo Lógico
+
+#### a) Análisis de Objetos
+
+Los objetos principales del sistema y sus relaciones:
+
+| **Objeto** | **Atributos principales** | **Responsabilidad** |
+|:-----------|:--------------------------|:--------------------|
+| **User** | id, name, email, hashed_password, role, is_active, is_locked, failed_login_attempts, locked_until, created_at | Representa a un usuario del sistema. Gestiona su autenticación, rol y estado de bloqueo. |
+| **UserSession** | id, user_id, jti, ip_address, user_agent, is_active, created_at, expires_at | Representa una sesión JWT activa. Permite la revocación de tokens individuales. |
+| **Scan** | id, user_id, target_url, status, depth, tech_stack, use_ai, risk_score, started_at, completed_at, current_module | Representa un escaneo de vulnerabilidades. Gestiona el ciclo de vida del proceso de análisis. |
+| **Vulnerability** | id, scan_id, module_name, vuln_type, severity, url, parameter, evidence, description, solution, cvss_score, cwe_id, ai_analysis | Representa una vulnerabilidad detectada. Almacena todos los datos técnicos y el análisis IA. |
+| **AuditLog** | id, user_id, action, ip_address, user_agent, endpoint, method, status_code, details, created_at | Representa una entrada del registro de auditoría. Inmutable. Rastrea cada acción relevante del sistema. |
+| **Report** | id, scan_id, user_id, report_type, file_path, file_size, created_at | Representa un reporte generado. Gestiona la metadata de los archivos PDF/HTML/JSON. |
+| **PasswordReset** | id, user_id, token, expires_at, is_used, created_at | Representa un token de recuperación de contraseña. Tiene vida útil de 1 hora y uso único. |
+
+#### b) Diagrama de Actividades con Objetos
+
+**Actividad: Proceso completo de escaneo**
+
+```
+[Usuario] ──► Ingresa URL y configuración
+                    │
+                    ▼
+[Sistema] ──► Valida URL (formato, no privada)
+                    │
+                    ▼
+[Scan:pending] ──► Se crea en BD con estado "pending"
+                    │
+                    ▼
+[BackgroundTask] ──► Actualiza Scan.status = "in_progress"
+                    │
+                    ▼
+         ┌──────────┴──────────────────────────┐
+         │                                      │
+         ▼                                      ▼
+[Módulo Headers] ──────────► [Módulo SQLi] ────► ...  (13 módulos en paralelo controlado)
+         │                        │
+         ▼                        ▼
+[Vulnerability:HIGH] ──► Se crea en BD para cada hallazgo
+         │
+         ▼
+[DeepSeek AI] ──► Analiza vulnerabilidad → CVSS, CWE, escenario, código remediación
+         │
+         ▼
+[Vulnerability] ──► Se actualiza con análisis IA
+         │
+         ▼
+[Scan:completed] ──► risk_score calculado, completed_at registrado
+         │
+         ▼
+[AuditLog] ──► Registra "scan_completed" con scan_id y risk_score
+```
+
+#### c) Diagrama de Secuencia
+
+**Secuencia: UC-03 — Iniciar Escaneo**
+
+```
+Usuario     Frontend(Next.js)    API(FastAPI)    Scanner    DeepSeek    MySQL
+   │               │                 │               │           │         │
+   │──POST /scans──►               │               │           │         │
+   │    {url, depth, stack, ai}    │               │           │         │
+   │               │──────────────►│               │           │         │
+   │               │               │──validate()───►           │         │
+   │               │               │◄──valid───────            │         │
+   │               │               │                           │         │
+   │               │               │──INSERT Scan(pending)─────────────►│
+   │               │               │◄──scan_id──────────────────────────│
+   │               │               │                           │         │
+   │               │               │──BackgroundTask(scan_id)──►         │
+   │               │◄──202 {scan_id}│               │           │         │
+   │◄──redirect /scans/{id}        │               │           │         │
+   │               │               │               │           │         │
+   │   [polling cada 3s]           │               │           │         │
+   │──GET /scans/{id}──────────────►               │           │         │
+   │               │               │               │──run_modules()      │
+   │               │               │               │──UPDATE Scan(running)►│
+   │               │               │               │──for each vuln:      │
+   │               │               │               │──INSERT Vuln(...)───►│
+   │               │               │               │──ai_analyze(vuln)──►│
+   │               │               │               │◄──{cvss,cwe,code}──  │
+   │               │               │               │──UPDATE Vuln(ai)────►│
+   │               │               │               │──UPDATE Scan(done)──►│
+   │               │◄──{status:done}│               │           │         │
+   │◄──muestra resultados          │               │           │         │
+```
+
+#### d) Diagrama de Clases
+
+```
+┌─────────────────────────────────┐
+│              User                │
+├─────────────────────────────────┤
+│ - id: int                        │
+│ - name: str                      │
+│ - email: str                     │
+│ - hashed_password: str           │
+│ - role: enum(admin,analyst,user) │
+│ - is_active: bool                │
+│ - is_locked: bool                │
+│ - failed_login_attempts: int     │
+│ - locked_until: datetime|null    │
+│ - created_at: datetime           │
+├─────────────────────────────────┤
+│ + verify_password(pwd): bool     │
+│ + generate_jwt(): str            │
+│ + lock_account(): void           │
+│ + unlock_account(): void         │
+└──────────────┬──────────────────┘
+               │ 1..*
+               │
+┌──────────────▼──────────────────┐    ┌─────────────────────────────────┐
+│            Scan                  │    │          Vulnerability           │
+├─────────────────────────────────┤    ├─────────────────────────────────┤
+│ - id: int                        │    │ - id: int                        │
+│ - user_id: int (FK)              │    │ - scan_id: int (FK)              │
+│ - target_url: str                │    │ - module_name: str               │
+│ - status: enum                   │    │ - vuln_type: str                 │
+│ - depth: enum(basic/std/full)    │◄───┤ - severity: enum                 │
+│ - tech_stack: str                │1.*│ - url: str                       │
+│ - use_ai: bool                   │    │ - parameter: str                 │
+│ - risk_score: int (0-100)        │    │ - evidence: str                  │
+│ - started_at: datetime           │    │ - description: str               │
+│ - completed_at: datetime|null    │    │ - solution: str                  │
+│ - current_module: str            │    │ - cvss_score: float|null         │
+├─────────────────────────────────┤    │ - cwe_id: str|null               │
+│ + calculate_risk_score(): int    │    │ - ai_analysis: JSON|null         │
+│ + mark_completed(): void         │    ├─────────────────────────────────┤
+└─────────────────────────────────┘    │ + get_severity_label(): str      │
+                                        └─────────────────────────────────┘
+
+┌─────────────────────────────────┐    ┌─────────────────────────────────┐
+│          AuditLog                │    │             Report               │
+├─────────────────────────────────┤    ├─────────────────────────────────┤
+│ - id: int                        │    │ - id: int                        │
+│ - user_id: int|null (FK)         │    │ - scan_id: int (FK)              │
+│ - action: str                    │    │ - user_id: int (FK)              │
+│ - ip_address: str                │    │ - report_type: enum(pdf/html/json│
+│ - user_agent: str                │    │ - file_path: str                 │
+│ - endpoint: str                  │    │ - file_size: int                 │
+│ - method: str                    │    │ - created_at: datetime           │
+│ - status_code: int               │    ├─────────────────────────────────┤
+│ - details: JSON                  │    │ + generate_pdf(): bytes          │
+│ - created_at: datetime           │    │ + generate_html(): str           │
+├─────────────────────────────────┤    │ + generate_json(): dict          │
+│ [READ ONLY — no update/delete]  │    └─────────────────────────────────┘
+└─────────────────────────────────┘
+
+┌─────────────────────────────────┐    ┌─────────────────────────────────┐
+│          UserSession             │    │         PasswordReset            │
+├─────────────────────────────────┤    ├─────────────────────────────────┤
+│ - id: int                        │    │ - id: int                        │
+│ - user_id: int (FK)              │    │ - user_id: int (FK)              │
+│ - jti: str (unique)              │    │ - token: str (unique)            │
+│ - ip_address: str                │    │ - expires_at: datetime           │
+│ - user_agent: str                │    │ - is_used: bool                  │
+│ - is_active: bool                │    │ - created_at: datetime           │
+│ - created_at: datetime           │    ├─────────────────────────────────┤
+│ - expires_at: datetime           │    │ + is_valid(): bool               │
+├─────────────────────────────────┤    │ + mark_used(): void              │
+│ + revoke(): void                 │    └─────────────────────────────────┘
+│ + revoke_all_user(): void        │
+└─────────────────────────────────┘
+```
+
+<div style="page-break-after: always;"></div>
+
+---
+
+## CONCLUSIONES
+
+1. VulnScan Pro cubre una necesidad real e insatisfecha en el ecosistema académico y de PYMES de Tacna: acceso gratuito a diagnósticos de seguridad web de nivel profesional, en español, con 13 módulos OWASP Top 10:2021 y análisis potenciado por IA.
+
+2. Los **67 requerimientos funcionales** especificados en este documento abarcan de forma exhaustiva todas las capacidades del sistema: autenticación (RF-01 a RF-16), motor de escaneo (RF-17 a RF-42), análisis IA (RF-43 a RF-47), reportes (RF-48 a RF-52), dashboard (RF-53 a RF-58), administración (RF-59 a RF-63) e historial (RF-64 a RF-67).
+
+3. Los **30 requerimientos no funcionales** garantizan que el sistema cumpla con los atributos de calidad ISO/IEC 25010 en todas sus dimensiones: seguridad (RNF-01, 07-09, 13, 15, 17, 20, 26-28, 30), rendimiento (RNF-02-03, 14, 19, 21-22), usabilidad (RNF-04, 16, 23), confiabilidad (RNF-05-06, 12), mantenibilidad (RNF-10, 18, 24-25, 29) y portabilidad (RNF-11).
+
+4. Las **18 reglas de negocio** establecen restricciones claras y medibles que gobiernan el comportamiento del sistema, especialmente en aspectos críticos como el uso ético (RN-01), la seguridad de datos (RN-13, RN-14) y la integridad del audit log (RN-10).
+
+5. Los modelos conceptual y lógico (diagramas de paquetes, casos de uso, secuencia, actividades y clases) proporcionan una visión completa de la arquitectura del sistema, facilitando la trazabilidad entre los requerimientos y su implementación técnica.
+
+---
+
+## RECOMENDACIONES
+
+1. Ampliar los módulos de escaneo en versiones futuras para cubrir la OWASP API Security Top 10 (inyecciones en APIs REST, exceso de datos expuestos, autorizaciones rotas).
+
+2. Implementar un sistema de notificaciones automáticas (email) al completarse un escaneo, especialmente cuando se detecten vulnerabilidades críticas.
+
+3. Integrar VulnScan Pro con pipelines CI/CD (GitHub Actions, Jenkins) para que el escaneo se ejecute automáticamente en cada merge a la rama principal.
+
+4. Desarrollar una biblioteca de payloads más extensa, actualizada regularmente con los últimos CVEs publicados, para mejorar la tasa de detección.
+
+5. Considerar la implementación de un módulo de re-escaneo automático programado para detectar regresiones de seguridad en proyectos en producción.
+
+---
+
+## BIBLIOGRAFÍA
+
+- OWASP Foundation (2021). *OWASP Top Ten 2021*. OWASP Foundation.
+- OWASP Foundation (2021). *OWASP Testing Guide v4.2*. OWASP Foundation.
+- FIRST.org (2019). *CVSS v3.1 Specification Document*. Forum of Incident Response and Security Teams.
+- Mitre Corporation (2024). *CWE/SANS Top 25 Most Dangerous Software Weaknesses*. Mitre Corporation.
+- ISO/IEC (2011). *ISO/IEC 25010:2011 — Systems and Software Quality Requirements and Evaluation (SQuaRE)*. International Organization for Standardization.
+- Pressman, R. S. (2010). *Ingeniería del Software: Un Enfoque Práctico* (7ª ed.). McGraw-Hill.
+- Sommerville, I. (2015). *Ingeniería de Software* (10ª ed.). Pearson Education.
+
+---
+
+## WEBGRAFÍA
+
+- FastAPI Documentation. Recuperado de: https://fastapi.tiangolo.com/
+- Next.js 16 Documentation. Recuperado de: https://nextjs.org/docs
+- SQLAlchemy 2.0 Documentation. Recuperado de: https://docs.sqlalchemy.org/en/20/
+- DeepSeek API Reference. Recuperado de: https://platform.deepseek.com/api-docs
+- OWASP Top 10:2021. Recuperado de: https://owasp.org/Top10/
+- OWASP Testing Guide v4.2. Recuperado de: https://owasp.org/www-project-web-security-testing-guide/
+- Python-JOSE JWT Library. Recuperado de: https://python-jose.readthedocs.io/
+- WeasyPrint PDF Generation. Recuperado de: https://weasyprint.org/
+- Chart.js Documentation. Recuperado de: https://www.chartjs.org/docs/
+- Ley N° 30096 — Ley de Delitos Informáticos. Recuperado de: https://www.gob.pe/institucion/congreso/normas-legales/242643-30096
+- Ley N° 29733 — Ley de Protección de Datos Personales. Recuperado de: https://www.gob.pe/institucion/congreso/normas-legales/113939-29733
+
+---
+
+*Documento elaborado por: Calloticona Chambilla, Marymar D. y Ramos Loza, Mariela Estefany*
+*Curso: Calidad y Pruebas de Software — Docente: Ing. Patrick Jose Cuadros Quiroga — UPT — 2026*
