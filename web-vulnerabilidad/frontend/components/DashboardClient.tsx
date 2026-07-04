@@ -4,8 +4,10 @@ import {
   Activity,
   BarChart3,
   Clock,
+  Download,
   KeyRound,
   LogOut,
+  Printer,
   RefreshCw,
   ScanLine,
   ShieldAlert,
@@ -198,6 +200,26 @@ export function DashboardClient({
         ? current.filter((item) => item !== moduleId)
         : [...current, moduleId]
     );
+  }
+
+  function exportToJson(scan: ScanDetail) {
+    try {
+      const blob = new Blob([JSON.stringify(scan, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `vulnscan-report-${scan.id}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError("No se pudo exportar a JSON.");
+    }
+  }
+
+  function printReport() {
+    window.print();
   }
 
   const severityChart = useMemo(() => {
@@ -406,19 +428,58 @@ export function DashboardClient({
             </section>
           </div>
 
-          <section className="panel">
+          <section className="panel report-panel">
             <div className="panel-header">
               <div>
                 <h2>Reporte</h2>
                 <p>{selectedScan ? `Escaneo #${selectedScan.id}` : "Selecciona un escaneo del historial."}</p>
               </div>
-              <ShieldAlert size={20} aria-hidden />
+              {selectedScan ? (
+                <div className="report-actions" style={{ display: "flex", gap: 8 }}>
+                  <button
+                    className="button secondary sm"
+                    type="button"
+                    onClick={() => exportToJson(selectedScan)}
+                    title="Exportar Reporte a JSON"
+                    style={{ padding: "4px 8px", minHeight: "32px", fontSize: "12px", display: "inline-flex", alignItems: "center", gap: "4px" }}
+                  >
+                    <Download size={14} aria-hidden />
+                    JSON
+                  </button>
+                  <button
+                    className="button secondary sm"
+                    type="button"
+                    onClick={printReport}
+                    title="Imprimir / Exportar a PDF"
+                    style={{ padding: "4px 8px", minHeight: "32px", fontSize: "12px", display: "inline-flex", alignItems: "center", gap: "4px" }}
+                  >
+                    <Printer size={14} aria-hidden />
+                    PDF
+                  </button>
+                </div>
+              ) : null}
+              <ShieldAlert size={20} className="report-icon-hide" aria-hidden />
             </div>
             <div className="panel-body">
               {selectedScan ? (
                 <div className="content-stack">
+                  <div className="print-only-header">
+                    <h1>Informe de Vulnerabilidades Web</h1>
+                    <div className="print-meta-grid">
+                      <div><strong>Objetivo:</strong> {selectedScan.target_url}</div>
+                      <div><strong>ID Escaneo:</strong> #{selectedScan.id}</div>
+                      <div><strong>Riesgo Promedio:</strong> {selectedScan.risk_score}/100</div>
+                      <div><strong>Fecha de Inicio:</strong> {new Date(selectedScan.created_at).toLocaleString("es-PE")}</div>
+                      <div><strong>Módulos Seleccionados:</strong> {selectedScan.modules.join(", ")}</div>
+                    </div>
+                  </div>
                   {selectedScan.error_message ? <div className="error-box">{selectedScan.error_message}</div> : null}
-                  {selectedScan.ai_summary ? <div className="summary-text">{selectedScan.ai_summary}</div> : null}
+                  {selectedScan.ai_summary ? (
+                    <div className="summary-text">
+                      <div className="summary-title-print"><strong>Resumen Ejecutivo:</strong></div>
+                      {selectedScan.ai_summary}
+                    </div>
+                  ) : null}
                   <div className="detail-list">
                     {selectedScan.vulnerabilities.map((finding) => (
                       <article className="finding" key={finding.id}>

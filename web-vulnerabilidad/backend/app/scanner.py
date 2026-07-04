@@ -32,6 +32,7 @@ class FetchedPage:
     url: str
     response: requests.Response
     body: str
+    ssl_error: bool = False
 
 
 def normalize_url(url: str) -> str:
@@ -96,13 +97,22 @@ def crawl_pages(target_url: str, depth: int, timeout: int) -> list[FetchedPage]:
             continue
         visited.add(current_url)
 
+        ssl_error_detected = False
         try:
             response = session.get(current_url, timeout=timeout, allow_redirects=True, verify=True)
+        except requests.exceptions.SSLError:
+            ssl_error_detected = True
+            try:
+                import urllib3
+                urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+                response = session.get(current_url, timeout=timeout, allow_redirects=True, verify=False)
+            except requests.RequestException:
+                continue
         except requests.RequestException:
             continue
 
         body = response.text[:500_000]
-        pages.append(FetchedPage(url=response.url, response=response, body=body))
+        pages.append(FetchedPage(url=response.url, response=response, body=body, ssl_error=ssl_error_detected))
 
         content_type = response.headers.get("content-type", "")
         if current_depth >= depth or "text/html" not in content_type:
@@ -169,6 +179,13 @@ def check_headers(page: FetchedPage) -> list[dict]:
             "No se restringe explicitamente el uso de APIs sensibles del navegador.",
             "Definir Permissions-Policy segun las funciones realmente necesarias.",
         ),
+        (
+            "x-xss-protection",
+            "low",
+            "X-XSS-Protection ausente",
+            "La cabecera X-XSS-Protection no esta configurada, lo que expone a navegadores antiguos a ataques de script reflejado.",
+            "Agregar X-XSS-Protection: 1; mode=block.",
+        ),
     ]
 
     vulnerabilities = []
@@ -195,6 +212,33 @@ def check_headers(page: FetchedPage) -> list[dict]:
                 "El sitio usa HTTPS pero no anuncia HSTS, por lo que clientes recurrentes no quedan protegidos contra downgrade.",
                 None,
                 "Agregar Strict-Transport-Security con max-age suficiente y evaluar includeSubDomains.",
+                page.url,
+            )
+        )
+
+    content_type = headers.get("content-type", "")
+    if "text/html" in content_type and "charset" not in content_type:
+        vulnerabilities.append(
+            build_vulnerability(
+                "headers",
+                "info",
+                "Charset no especificado en Content-Type",
+                "La respuesta no declara explicitamente la codificacion de caracteres (charset) en la cabecera Content-Type, lo que podria provocar que el navegador malinterprete la codificacion.",
+                content_type,
+                "Especificar siempre la codificacion en la cabecera, por ejemplo: Content-Type: text/html; charset=utf-8.",
+                page.url,
+            )
+        )
+
+    if page.ssl_error:
+        vulnerabilities.append(
+            build_vulnerability(
+                "headers",
+                "low",
+                "Error de verificacion SSL/TLS",
+                "El servidor utiliza un certificado SSL/TLS no valido, autofirmado o vencido. Esto expone a los usuarios a ataques de intermediario (MitM).",
+                None,
+                "Instalar un certificado SSL valido emitido por una autoridad certificadora de confianza (por ejemplo, Let's Encrypt).",
                 page.url,
             )
         )
