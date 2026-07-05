@@ -1,0 +1,298 @@
+name: CI — Web Vulnerability Scanner
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+permissions:
+  contents: write
+  checks: write
+  pull-requests: write
+
+jobs:
+  # ─────────────────────────────────────────────────────────────
+  # 1. Tests unitarios + BDD + cobertura
+  # ─────────────────────────────────────────────────────────────
+  backend-tests:
+    name: Tests Backend (unitarios + BDD + cobertura)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependencias de desarrollo
+        run: pip install -r requirements-dev.txt
+
+      - name: Ejecutar tests unitarios con cobertura
+        run: pytest tests/test_scanner.py -v
+
+      - name: Ejecutar escenarios BDD
+        run: |
+          pytest tests/steps/ -v --no-cov \
+            --junit-xml=bdd-results.xml 2>&1 | tee bdd-output.txt
+
+      - name: Anotar cobertura en GH Actions (PRs)
+        uses: MishaKav/pytest-coverage-comment@main
+        if: github.event_name == 'pull_request'
+        with:
+          pytest-xml-coverage-path: backend/coverage.xml
+          title: Cobertura de Pruebas — Web Vulnerability Scanner
+
+      - name: Generar reporte BDD HTML
+        if: always()
+        run: |
+          python3 - <<'PYEOF'
+          import xml.etree.ElementTree as ET, pathlib, html
+          from datetime import datetime
+
+          xml_path = pathlib.Path("bdd-results.xml")
+          if not xml_path.exists():
+              exit(0)
+
+          tree = ET.parse(xml_path)
+          root = tree.getroot()
+          suite = root if root.tag == "testsuite" else root.find("testsuite")
+          tests = int(suite.get("tests", 0))
+          failures = int(suite.get("failures", 0))
+          errors = int(suite.get("errors", 0))
+          skipped = int(suite.get("skipped", 0))
+          passed = tests - failures - errors - skipped
+          ts = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+          pct = round(passed / tests * 100) if tests else 0
+          bar_color = "#27ae60" if failures == 0 else "#c0392b"
+
+          rows = ""
+          for tc in suite.findall("testcase"):
+              name = html.escape(tc.get("name","").replace("test_","").replace("_"," ").title())
+              time_s = tc.get("time","0")
+              failure = tc.find("failure")
+              if failure is not None:
+                  status = '<span style="color:#c0392b;font-weight:bold">FALLO</span>'
+                  detail = html.escape((failure.text or "")[:300])
+              else:
+                  status = '<span style="color:#27ae60;font-weight:bold">PASO</span>'
+                  detail = ""
+              rows += f"<tr><td>{status}</td><td>{name}</td><td>{time_s}s</td><td><small>{detail}</small></td></tr>"
+
+          page = f"""<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
+          <title>BDD — Web Vulnerability Scanner</title>
+          <style>body{{font-family:system-ui;margin:0;background:#f4f6f9}}
+          .header{{background:#2c3e50;color:white;padding:20px 30px}}h1{{margin:0;font-size:22px}}
+          .header p{{margin:4px 0 0;opacity:.7;font-size:13px}}.container{{padding:20px 30px}}
+          .cards{{display:flex;gap:12px;margin-bottom:20px}}.card{{background:white;border-radius:8px;
+          padding:14px 18px;min-width:110px;border-top:3px solid #ccc;box-shadow:0 1px 4px rgba(0,0,0,.08)}}
+          .card .val{{font-size:28px;font-weight:800;margin:0}}.card .lbl{{font-size:11px;color:#888;margin-top:2px}}
+          .card.green{{border-color:#27ae60}}.card.red{{border-color:#c0392b}}.card.blue{{border-color:#2980b9}}
+          .bar-bg{{background:#e0e0e0;border-radius:6px;height:12px;margin-bottom:20px}}
+          .bar{{background:{bar_color};height:12px;border-radius:6px;width:{pct}%}}
+          table{{width:100%;border-collapse:collapse;background:white;border-radius:8px;
+          overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)}}
+          th{{background:#2c3e50;color:white;padding:10px 14px;text-align:left;font-size:12px}}
+          td{{padding:9px 14px;border-bottom:1px solid #f0f0f0;font-size:12px;vertical-align:top}}
+          tr:hover{{background:#f8fafc}}</style></head>
+          <body><div class="header"><h1>🥒 BDD — Web Vulnerability Scanner</h1>
+          <p>Escenarios Gherkin con pytest-bdd · {ts}</p></div>
+          <div class="container"><div class="cards">
+          <div class="card green"><p class="val">{passed}</p><p class="lbl">Pasaron</p></div>
+          <div class="card {'red' if failures else 'green'}"><p class="val">{failures}</p><p class="lbl">Fallaron</p></div>
+          <div class="card blue"><p class="val">{tests}</p><p class="lbl">Total</p></div></div>
+          <div class="bar-bg"><div class="bar" title="{pct}% pasaron"></div></div>
+          <table><thead><tr><th>Estado</th><th>Escenario</th><th>Tiempo</th><th>Detalle</th></tr></thead>
+          <tbody>{rows}</tbody></table></div></body></html>"""
+
+          pathlib.Path("bdd-report.html").write_text(page)
+          print(f"BDD: {passed}/{tests} pasaron ({pct}%)")
+          PYEOF
+
+      - name: Subir artefactos
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-reports
+          path: |
+            backend/htmlcov/
+            backend/coverage.xml
+            backend/bdd-results.xml
+            backend/bdd-report.html
+
+      - name: Publicar cobertura en GH Pages
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: backend/htmlcov
+          destination_dir: coverage
+          keep_files: true
+
+      - name: Publicar reporte BDD en GH Pages
+        if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && always()
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: backend
+          include_files: bdd-report.html
+          destination_dir: bdd
+          keep_files: true
+
+  # ─────────────────────────────────────────────────────────────
+  # 2. Análisis estático — Semgrep
+  # ─────────────────────────────────────────────────────────────
+  semgrep:
+    name: Análisis estático — Semgrep
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar Semgrep
+        run: pip install semgrep
+
+      - name: Ejecutar Semgrep (Python + OWASP Top 10)
+        run: |
+          semgrep scan \
+            --config "p/python" \
+            --config "p/security-audit" \
+            --config "p/owasp-top-ten" \
+            --json --output semgrep-report.json \
+            backend/ || true
+
+      - name: Generar reporte HTML de Semgrep
+        run: |
+          python3 - <<'PYEOF'
+          import json, pathlib, html
+          from datetime import datetime
+
+          data = json.loads(pathlib.Path("semgrep-report.json").read_text())
+          results = data.get("results", [])
+          sev_counts = {"ERROR": 0, "WARNING": 0, "INFO": 0}
+          rows = ""
+          for r in results:
+              sev = r.get("extra", {}).get("severity", "INFO").upper()
+              sev_counts[sev] = sev_counts.get(sev, 0) + 1
+              msg = html.escape(r.get("extra", {}).get("message", "")[:200])
+              path = html.escape(r.get("path", "").replace("backend/", ""))
+              line = r.get("start", {}).get("line", "")
+              check = html.escape(r.get("check_id", "").split(".")[-1])
+              color = {"ERROR": "#c0392b", "WARNING": "#e67e22", "INFO": "#2980b9"}.get(sev, "#888")
+              badge = f'<span style="background:{color};color:white;padding:2px 8px;border-radius:10px;font-size:11px">{sev}</span>'
+              rows += f"<tr><td>{badge}</td><td><code>{path}:{line}</code></td><td>{check}</td><td>{msg}</td></tr>"
+
+          ts = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+          page = f"""<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
+          <title>Semgrep — Web Vulnerability Scanner</title>
+          <style>body{{font-family:system-ui;margin:0;background:#f4f6f9}}
+          .header{{background:#2c3e50;color:white;padding:20px 30px}}h1{{margin:0;font-size:22px}}
+          .header p{{margin:4px 0 0;opacity:.7;font-size:13px}}.container{{padding:20px 30px}}
+          .cards{{display:flex;gap:12px;margin-bottom:20px}}.card{{background:white;border-radius:8px;
+          padding:14px 18px;min-width:110px;border-top:3px solid #ccc;box-shadow:0 1px 4px rgba(0,0,0,.08)}}
+          .card .val{{font-size:28px;font-weight:800;margin:0}}.card .lbl{{font-size:11px;color:#888;margin-top:2px}}
+          table{{width:100%;border-collapse:collapse;background:white;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)}}
+          th{{background:#2c3e50;color:white;padding:10px 14px;text-align:left;font-size:12px}}
+          td{{padding:9px 14px;border-bottom:1px solid #f0f0f0;font-size:12px;vertical-align:top}}
+          code{{background:#f0f4f8;padding:2px 5px;border-radius:3px;font-size:11px}}</style></head>
+          <body><div class="header"><h1>🔍 Semgrep — Web Vulnerability Scanner</h1>
+          <p>OWASP Top 10 + Python Security · {ts}</p></div>
+          <div class="container"><div class="cards">
+          <div class="card"><p class="val">{sev_counts['ERROR']}</p><p class="lbl">Críticos</p></div>
+          <div class="card"><p class="val">{sev_counts['WARNING']}</p><p class="lbl">Advertencias</p></div>
+          <div class="card"><p class="val">{len(results)}</p><p class="lbl">Total</p></div></div>
+          <table><thead><tr><th>Severidad</th><th>Archivo</th><th>Regla</th><th>Descripción</th></tr></thead>
+          <tbody>{''.join(['<tr><td colspan=4 style="text-align:center;color:#27ae60;padding:20px">✅ Sin hallazgos — código pasa análisis estático</td></tr>']) if not rows else rows}
+          </tbody></table></div></body></html>"""
+
+          pathlib.Path("semgrep-report.html").write_text(page)
+          print(f"Semgrep: {len(results)} hallazgos")
+          PYEOF
+
+      - name: Subir reporte Semgrep
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-report
+          path: semgrep-report.html
+
+      - name: Publicar Semgrep en GH Pages
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .
+          include_files: semgrep-report.html
+          destination_dir: semgrep
+          keep_files: true
+
+  # ─────────────────────────────────────────────────────────────
+  # 3. SonarCloud
+  # ─────────────────────────────────────────────────────────────
+  sonarcloud:
+    name: Análisis estático — SonarCloud
+    runs-on: ubuntu-latest
+    needs: backend-tests
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Descargar reporte de cobertura
+        uses: actions/download-artifact@v4
+        with:
+          name: test-reports
+          path: .
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  # ─────────────────────────────────────────────────────────────
+  # 4. Índice de reportes en GH Pages
+  # ─────────────────────────────────────────────────────────────
+  publish-index:
+    name: Publicar índice de reportes
+    runs-on: ubuntu-latest
+    needs: [backend-tests, semgrep]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    steps:
+      - name: Generar página índice
+        run: |
+          mkdir -p public
+          cat > public/index.html <<'EOF'
+          <!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
+          <title>Web Vulnerability Scanner — Reportes CI</title>
+          <style>body{font-family:system-ui;margin:0;background:#f4f6f9}
+          .header{background:#2c3e50;color:white;padding:30px 40px}
+          h1{margin:0;font-size:24px}p{margin:6px 0 0;opacity:.7;font-size:14px}
+          .grid{display:flex;flex-wrap:wrap;gap:16px;padding:30px 40px}
+          .card{background:white;border-radius:10px;padding:20px 24px;width:200px;
+                box-shadow:0 2px 8px rgba(0,0,0,.08);text-decoration:none;color:inherit;
+                border-top:4px solid #2c3e50;transition:transform .15s}
+          .card:hover{transform:translateY(-2px)}.card.green{border-color:#27ae60}
+          .card.blue{border-color:#2980b9}.card.orange{border-color:#e67e22}.card.purple{border-color:#8e44ad}
+          .icon{font-size:28px;margin-bottom:8px}.card h2{font-size:14px;margin:0 0 4px}
+          .card p{font-size:12px;color:#888;margin:0}</style></head>
+          <body><div class="header"><h1>🛡️ Web Vulnerability Scanner</h1>
+          <p>Reportes automáticos generados por GitHub Actions — CI/CD</p></div>
+          <div class="grid">
+          <a class="card green" href="coverage/index.html"><div class="icon">📊</div>
+          <h2>Cobertura</h2><p>pytest-cov por módulo y línea</p></a>
+          <a class="card blue" href="semgrep/semgrep-report.html"><div class="icon">🔍</div>
+          <h2>Semgrep</h2><p>OWASP Top 10 + Python Security</p></a>
+          <a class="card orange" href="bdd/bdd-report.html"><div class="icon">🥒</div>
+          <h2>BDD</h2><p>Escenarios Gherkin con pytest-bdd</p></a>
+          <a class="card purple" href="mutations/index.html"><div class="icon">🧬</div>
+          <h2>Mutaciones</h2><p>Reporte mutmut</p></a>
+          </div></body></html>
+          EOF
+
+      - name: Publicar índice en GH Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: public
+          keep_files: true
