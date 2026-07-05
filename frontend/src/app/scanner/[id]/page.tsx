@@ -13,10 +13,26 @@ import { useAuth } from "@/hooks/useAuth";
 import { Navbar } from "@/components/Navbar";
 import { SeverityBadge } from "@/components/SeverityBadge";
 
+type AIAnalysis = {
+  risk_explanation?: string;
+  remediation?: {
+    immediate?: string[];
+    code_fix?: string;
+  };
+  references?: string[];
+};
+
+type AIReport = {
+  risk_level?: string;
+  risk_score?: number;
+  executive_summary?: string;
+  immediate_actions?: string[];
+};
+
 function VulnCard({ vuln }: { vuln: Vulnerability }) {
   const [expanded, setExpanded] = useState(false);
-  const ai = vuln.ai_analysis as Record<string, unknown> | null;
-  const remediation = ai?.remediation as Record<string, unknown> | null;
+  const ai = vuln.ai_analysis as AIAnalysis | null;
+  const remediation = ai?.remediation ?? null;
 
   return (
     <div className={`bg-[#131b2e] border rounded-xl overflow-hidden transition-colors ${
@@ -97,17 +113,17 @@ function VulnCard({ vuln }: { vuln: Vulnerability }) {
                 Análisis IA
               </h4>
 
-              {ai.risk_explanation && (
-                <p className="text-sm text-gray-300 mb-3">{String(ai.risk_explanation)}</p>
+              {typeof ai.risk_explanation === "string" && (
+                <p className="text-sm text-gray-300 mb-3">{ai.risk_explanation}</p>
               )}
 
               {remediation && (
                 <>
-                  {(remediation.immediate as string[])?.length > 0 && (
+                  {remediation.immediate && remediation.immediate.length > 0 && (
                     <div className="mb-3">
                       <h5 className="text-xs font-medium text-gray-400 mb-2">Acciones Inmediatas</h5>
                       <ul className="space-y-1.5">
-                        {(remediation.immediate as string[]).map((a, i) => (
+                        {remediation.immediate.map((a, i) => (
                           <li key={i} className="text-sm text-gray-300 flex items-start gap-2">
                             <CheckCircle className="w-3.5 h-3.5 text-green-400 flex-shrink-0 mt-0.5" />
                             {a}
@@ -117,22 +133,22 @@ function VulnCard({ vuln }: { vuln: Vulnerability }) {
                     </div>
                   )}
 
-                  {(remediation.code_fix as string) && (
+                  {remediation.code_fix && (
                     <div>
                       <h5 className="text-xs font-medium text-gray-400 mb-2">Código Corregido</h5>
                       <pre className="bg-[#0a0f1e] rounded-lg p-3 text-xs text-green-300 whitespace-pre-wrap break-all overflow-x-auto">
-                        {String(remediation.code_fix ?? "")}
+                        {remediation.code_fix}
                       </pre>
                     </div>
                   )}
                 </>
               )}
 
-              {(ai.references as string[])?.length > 0 && (
+              {ai.references && ai.references.length > 0 && (
                 <div className="mt-3 pt-3 border-t border-gray-800/50">
                   <h5 className="text-xs font-medium text-gray-500 mb-1.5">Referencias</h5>
                   <div className="space-y-1">
-                    {(ai.references as string[]).slice(0, 2).map((ref, i) => (
+                    {ai.references.slice(0, 2).map((ref, i) => (
                       <a key={i} href={ref} target="_blank" rel="noopener noreferrer"
                         className="text-xs text-blue-400 hover:text-blue-300 block truncate">
                         {ref}
@@ -214,7 +230,7 @@ export default function ScanDetailPage({ params }: { params: Promise<{ id: strin
   if (sortBy === "severity") filteredVulns.sort((a, b) => (SEVERITY_ORDER[a.severity] || 5) - (SEVERITY_ORDER[b.severity] || 5));
   else if (sortBy === "type") filteredVulns.sort((a, b) => a.vuln_type.localeCompare(b.vuln_type));
 
-  const aiReport = scan.result_summary?.ai_report as Record<string, unknown> | undefined;
+  const aiReport = scan.result_summary?.ai_report as AIReport | undefined;
 
   const statusDot: Record<string, string> = {
     completed: "bg-green-400",
@@ -349,35 +365,35 @@ export default function ScanDetailPage({ params }: { params: Promise<{ id: strin
                         aiReport.risk_level === "CRÍTICO" ? "text-red-400" :
                         aiReport.risk_level === "ALTO" ? "text-orange-400" :
                         aiReport.risk_level === "MEDIO" ? "text-yellow-400" : "text-blue-400"
-                      }`}>{String(aiReport.risk_level ?? "")}</span>
+                      }`}>{aiReport.risk_level}</span>
                     </div>
                   )}
                   {aiReport.risk_score !== undefined && (
                     <div className="mb-3">
                       <div className="flex justify-between text-xs text-gray-500 mb-1">
                         <span>Puntuación de riesgo</span>
-                        <span>{aiReport.risk_score as number}/100</span>
+                        <span>{aiReport.risk_score}/100</span>
                       </div>
                       <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
                         <div
                           className={`h-full rounded-full ${
-                            (aiReport.risk_score as number) >= 75 ? "bg-red-500" :
-                            (aiReport.risk_score as number) >= 50 ? "bg-orange-500" :
-                            (aiReport.risk_score as number) >= 25 ? "bg-yellow-500" : "bg-blue-500"
+                            aiReport.risk_score >= 75 ? "bg-red-500" :
+                            aiReport.risk_score >= 50 ? "bg-orange-500" :
+                            aiReport.risk_score >= 25 ? "bg-yellow-500" : "bg-blue-500"
                           }`}
-                          style={{ width: `${aiReport.risk_score as number}%` }}
+                          style={{ width: `${aiReport.risk_score}%` }}
                         />
                       </div>
                     </div>
                   )}
                   {aiReport.executive_summary && (
-                    <p className="text-sm text-gray-400 leading-relaxed">{(aiReport.executive_summary as string).substring(0, 300)}...</p>
+                    <p className="text-sm text-gray-400 leading-relaxed">{aiReport.executive_summary.substring(0, 300)}...</p>
                   )}
-                  {(aiReport.immediate_actions as string[])?.length > 0 && (
+                  {aiReport.immediate_actions && aiReport.immediate_actions.length > 0 && (
                     <div className="mt-3 pt-3 border-t border-gray-800/50">
                       <h4 className="text-xs font-medium text-gray-500 mb-2">Acciones urgentes</h4>
                       <ul className="space-y-1">
-                        {(aiReport.immediate_actions as string[]).slice(0, 3).map((a, i) => (
+                        {aiReport.immediate_actions.slice(0, 3).map((a, i) => (
                           <li key={i} className="text-xs text-gray-300 flex items-start gap-1.5">
                             <span className="text-red-400 flex-shrink-0">→</span>
                             {a}
