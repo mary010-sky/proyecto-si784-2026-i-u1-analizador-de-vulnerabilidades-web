@@ -251,44 +251,298 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   # ─────────────────────────────────────────────────────────────
-  # 4. Índice de reportes en GH Pages
+  # 4. Pruebas de mutaciones — mutmut
+  # ─────────────────────────────────────────────────────────────
+  mutation-tests:
+    name: Pruebas de Mutaciones — mutmut
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependencias de desarrollo
+        run: pip install -r requirements-dev.txt
+
+      - name: Ejecutar mutmut
+        run: |
+          mutmut run --no-progress || true
+          mutmut results || true
+
+      - name: Generar reporte HTML de mutaciones
+        if: always()
+        run: |
+          python3 - <<'PYEOF'
+          import subprocess, pathlib, html
+          from datetime import datetime
+
+          def run(cmd):
+              r = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+              return r.stdout + r.stderr
+
+          results_raw = run("mutmut results")
+          summary_raw = run("mutmut show")
+
+          lines = results_raw.strip().splitlines()
+          killed = survived = timeout = suspicious = 0
+          rows = ""
+          for line in lines:
+              line = line.strip()
+              if not line:
+                  continue
+              if "Killed" in line or "killed" in line:
+                  killed += line.count("#") if "#" in line else 1
+              elif "Survived" in line or "survived" in line:
+                  survived += line.count("#") if "#" in line else 1
+              elif "Timeout" in line:
+                  timeout += 1
+              elif "Suspicious" in line:
+                  suspicious += 1
+
+          # Parsear salida de mutmut results que viene en formato "Killed mutants: X"
+          for line in lines:
+              if ":" in line:
+                  key, _, val = line.partition(":")
+                  val = val.strip()
+                  key = key.strip().lower()
+                  try:
+                      count = int(val)
+                      if "killed" in key:
+                          killed = count
+                      elif "survived" in key:
+                          survived = count
+                      elif "timeout" in key:
+                          timeout = count
+                      elif "suspicious" in key:
+                          suspicious = count
+                  except ValueError:
+                      pass
+
+          total = killed + survived + timeout + suspicious
+          score = round(killed / total * 100) if total else 0
+          bar_color = "#27ae60" if score >= 70 else ("#e67e22" if score >= 40 else "#c0392b")
+          ts = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+
+          # Mostrar detalle de mutantes sobrevividos
+          detail_rows = ""
+          current_mutant = None
+          for line in run("mutmut results").splitlines():
+              if line.startswith("Survived") or "survived" in line.lower():
+                  escaped = html.escape(line)
+                  detail_rows += f'<tr><td><span style="background:#c0392b;color:white;padding:2px 8px;border-radius:10px;font-size:11px">SOBREVIVIO</span></td><td>{escaped}</td></tr>'
+              elif line.startswith("Killed") or "killed" in line.lower():
+                  escaped = html.escape(line)
+                  detail_rows += f'<tr><td><span style="background:#27ae60;color:white;padding:2px 8px;border-radius:10px;font-size:11px">MATADO</span></td><td>{escaped}</td></tr>'
+
+          page = f"""<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
+          <title>Mutaciones — Web Vulnerability Scanner</title>
+          <style>body{{font-family:system-ui;margin:0;background:#f4f6f9}}
+          .header{{background:#2c3e50;color:white;padding:20px 30px}}h1{{margin:0;font-size:22px}}
+          .header p{{margin:4px 0 0;opacity:.7;font-size:13px}}.container{{padding:20px 30px}}
+          .cards{{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}}
+          .card{{background:white;border-radius:8px;padding:14px 18px;min-width:110px;
+          border-top:3px solid #ccc;box-shadow:0 1px 4px rgba(0,0,0,.08)}}
+          .card .val{{font-size:28px;font-weight:800;margin:0}}.card .lbl{{font-size:11px;color:#888;margin-top:2px}}
+          .bar-bg{{background:#e0e0e0;border-radius:6px;height:16px;margin-bottom:8px;position:relative}}
+          .bar{{background:{bar_color};height:16px;border-radius:6px;width:{score}%;
+          display:flex;align-items:center;justify-content:flex-end;padding-right:8px}}
+          .bar span{{color:white;font-size:11px;font-weight:700}}
+          .score-label{{font-size:12px;color:#888;margin-bottom:20px}}
+          table{{width:100%;border-collapse:collapse;background:white;border-radius:8px;
+          overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)}}
+          th{{background:#2c3e50;color:white;padding:10px 14px;text-align:left;font-size:12px}}
+          td{{padding:9px 14px;border-bottom:1px solid #f0f0f0;font-size:12px;vertical-align:top}}
+          pre{{background:#f0f4f8;padding:12px;border-radius:6px;font-size:11px;overflow-x:auto}}
+          </style></head>
+          <body><div class="header"><h1>🧬 Pruebas de Mutaciones — Web Vulnerability Scanner</h1>
+          <p>mutmut sobre scanner.py · {ts}</p></div>
+          <div class="container"><div class="cards">
+          <div class="card" style="border-color:{bar_color}"><p class="val">{score}%</p><p class="lbl">Mutation Score</p></div>
+          <div class="card" style="border-color:#27ae60"><p class="val">{killed}</p><p class="lbl">Matados</p></div>
+          <div class="card" style="border-color:#c0392b"><p class="val">{survived}</p><p class="lbl">Sobrevivieron</p></div>
+          <div class="card" style="border-color:#95a5a6"><p class="val">{total}</p><p class="lbl">Total</p></div>
+          </div>
+          <div class="bar-bg"><div class="bar"><span>{score}%</span></div></div>
+          <p class="score-label">Un score ≥ 70% es considerado bueno · scanner.py</p>
+          <h3 style="margin:20px 0 10px;font-size:14px">Resultados por mutante</h3>
+          <table><thead><tr><th>Estado</th><th>Mutante</th></tr></thead>
+          <tbody>{detail_rows if detail_rows else '<tr><td colspan=2 style="text-align:center;padding:20px;color:#888">Sin detalle disponible — revisa el log de CI</td></tr>'}
+          </tbody></table>
+          <h3 style="margin:20px 0 10px;font-size:14px">Salida completa</h3>
+          <pre>{html.escape(results_raw[:3000])}</pre>
+          </div></body></html>"""
+
+          pathlib.Path("mutations-report.html").write_text(page, encoding="utf-8")
+          print(f"Mutation score: {score}% ({killed} killed / {total} total)")
+          PYEOF
+
+      - name: Subir reporte de mutaciones
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mutations-report
+          path: backend/mutations-report.html
+
+      - name: Publicar mutaciones en GH Pages
+        if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && always()
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: backend
+          include_files: mutations-report.html
+          destination_dir: mutations
+          keep_files: true
+
+  # ─────────────────────────────────────────────────────────────
+  # 5. Pruebas de UI — Playwright (con video)
+  # ─────────────────────────────────────────────────────────────
+  playwright:
+    name: Pruebas de UI — Playwright
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Instalar Playwright y navegadores
+        run: |
+          npm install -D @playwright/test
+          npx playwright install chromium --with-deps
+
+      - name: Build de Next.js
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:8000
+
+      - name: Iniciar servidor Next.js
+        run: npx next start &
+        env:
+          PORT: 3000
+
+      - name: Esperar a que el servidor esté listo
+        run: |
+          for i in {1..30}; do
+            curl -s http://localhost:3000 > /dev/null && echo "Servidor listo" && break
+            echo "Esperando... intento $i"
+            sleep 2
+          done
+
+      - name: Ejecutar pruebas Playwright con video
+        run: |
+          BASE_URL=http://localhost:3000 \
+          npx playwright test --reporter=list,html,junit
+        continue-on-error: true
+
+      - name: Subir videos y reporte Playwright
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: |
+            frontend/playwright-report/
+            frontend/test-results/
+          retention-days: 14
+
+      - name: Publicar reporte Playwright en GH Pages
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: frontend/playwright-report
+          destination_dir: playwright
+          keep_files: true
+
+  # ─────────────────────────────────────────────────────────────
+  # 6. Índice de reportes en GH Pages
   # ─────────────────────────────────────────────────────────────
   publish-index:
     name: Publicar índice de reportes
     runs-on: ubuntu-latest
-    needs: [backend-tests, semgrep]
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    needs: [backend-tests, semgrep, mutation-tests, playwright]
+    if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && always()
     steps:
       - name: Generar página índice
         run: |
           mkdir -p public
-          cat > public/index.html <<'EOF'
+          cat > public/index.html <<'HTMLEOF'
           <!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
           <title>Web Vulnerability Scanner — Reportes CI</title>
-          <style>body{font-family:system-ui;margin:0;background:#f4f6f9}
-          .header{background:#2c3e50;color:white;padding:30px 40px}
-          h1{margin:0;font-size:24px}p{margin:6px 0 0;opacity:.7;font-size:14px}
+          <style>
+          *{box-sizing:border-box}
+          body{font-family:system-ui,sans-serif;margin:0;background:#f4f6f9}
+          .header{background:linear-gradient(135deg,#1a1f35,#2c3e50);color:white;padding:30px 40px}
+          h1{margin:0;font-size:26px;font-weight:800}
+          .header p{margin:8px 0 0;opacity:.7;font-size:14px}
           .grid{display:flex;flex-wrap:wrap;gap:16px;padding:30px 40px}
-          .card{background:white;border-radius:10px;padding:20px 24px;width:200px;
-                box-shadow:0 2px 8px rgba(0,0,0,.08);text-decoration:none;color:inherit;
-                border-top:4px solid #2c3e50;transition:transform .15s}
-          .card:hover{transform:translateY(-2px)}.card.green{border-color:#27ae60}
-          .card.blue{border-color:#2980b9}.card.orange{border-color:#e67e22}.card.purple{border-color:#8e44ad}
-          .icon{font-size:28px;margin-bottom:8px}.card h2{font-size:14px;margin:0 0 4px}
-          .card p{font-size:12px;color:#888;margin:0}</style></head>
-          <body><div class="header"><h1>🛡️ Web Vulnerability Scanner</h1>
-          <p>Reportes automáticos generados por GitHub Actions — CI/CD</p></div>
+          .card{background:white;border-radius:12px;padding:22px 26px;width:220px;
+                box-shadow:0 2px 12px rgba(0,0,0,.08);text-decoration:none;color:inherit;
+                border-top:4px solid #2c3e50;transition:transform .15s,box-shadow .15s;display:block}
+          .card:hover{transform:translateY(-3px);box-shadow:0 6px 20px rgba(0,0,0,.12)}
+          .card.green{border-color:#27ae60}.card.blue{border-color:#2980b9}
+          .card.orange{border-color:#e67e22}.card.purple{border-color:#8e44ad}
+          .card.teal{border-color:#16a085}
+          .icon{font-size:32px;margin-bottom:10px}
+          .card h2{font-size:15px;margin:0 0 6px;font-weight:700}
+          .card p{font-size:12px;color:#888;margin:0;line-height:1.5}
+          .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;
+                 font-weight:600;margin-top:8px;background:#27ae60;color:white}
+          footer{text-align:center;padding:20px;color:#aaa;font-size:12px}
+          </style></head>
+          <body>
+          <div class="header">
+            <h1>🛡️ Web Vulnerability Scanner</h1>
+            <p>Reportes automáticos de calidad y seguridad — GitHub Actions CI/CD</p>
+          </div>
           <div class="grid">
-          <a class="card green" href="coverage/index.html"><div class="icon">📊</div>
-          <h2>Cobertura</h2><p>pytest-cov por módulo y línea</p></a>
-          <a class="card blue" href="semgrep/semgrep-report.html"><div class="icon">🔍</div>
-          <h2>Semgrep</h2><p>OWASP Top 10 + Python Security</p></a>
-          <a class="card orange" href="bdd/bdd-report.html"><div class="icon">🥒</div>
-          <h2>BDD</h2><p>Escenarios Gherkin con pytest-bdd</p></a>
-          <a class="card purple" href="mutations/index.html"><div class="icon">🧬</div>
-          <h2>Mutaciones</h2><p>Reporte mutmut</p></a>
-          </div></body></html>
-          EOF
+            <a class="card green" href="coverage/index.html">
+              <div class="icon">📊</div>
+              <h2>Cobertura de Código</h2>
+              <p>Reporte pytest-cov con detalle por módulo y línea</p>
+              <span class="badge">pytest-cov</span>
+            </a>
+            <a class="card blue" href="semgrep/semgrep-report.html">
+              <div class="icon">🔍</div>
+              <h2>Análisis Estático</h2>
+              <p>Semgrep OWASP Top 10 + Python Security rules</p>
+              <span class="badge">Semgrep</span>
+            </a>
+            <a class="card orange" href="bdd/bdd-report.html">
+              <div class="icon">🥒</div>
+              <h2>Pruebas BDD</h2>
+              <p>Escenarios Gherkin ejecutados con pytest-bdd</p>
+              <span class="badge">pytest-bdd</span>
+            </a>
+            <a class="card purple" href="mutations/mutations-report.html">
+              <div class="icon">🧬</div>
+              <h2>Pruebas de Mutaciones</h2>
+              <p>Mutation score de scanner.py con mutmut</p>
+              <span class="badge">mutmut</span>
+            </a>
+            <a class="card teal" href="playwright/index.html">
+              <div class="icon">🎭</div>
+              <h2>Pruebas de UI</h2>
+              <p>Tests de interfaz con video grabado — Playwright</p>
+              <span class="badge">Playwright</span>
+            </a>
+          </div>
+          <footer>Generado automáticamente por GitHub Actions · Web Vulnerability Scanner</footer>
+          </body></html>
+          HTMLEOF
 
       - name: Publicar índice en GH Pages
         uses: peaceiris/actions-gh-pages@v4
