@@ -98,7 +98,7 @@ function VulnCard({ vuln }: { vuln: Vulnerability }) {
               </h4>
 
               {ai.risk_explanation && (
-                <p className="text-sm text-gray-300 mb-3">{ai.risk_explanation as string}</p>
+                <p className="text-sm text-gray-300 mb-3">{String(ai.risk_explanation)}</p>
               )}
 
               {remediation && (
@@ -121,7 +121,7 @@ function VulnCard({ vuln }: { vuln: Vulnerability }) {
                     <div>
                       <h5 className="text-xs font-medium text-gray-400 mb-2">Código Corregido</h5>
                       <pre className="bg-[#0a0f1e] rounded-lg p-3 text-xs text-green-300 whitespace-pre-wrap break-all overflow-x-auto">
-                        {remediation.code_fix as string}
+                        {String(remediation.code_fix ?? "")}
                       </pre>
                     </div>
                   )}
@@ -349,7 +349,7 @@ export default function ScanDetailPage({ params }: { params: Promise<{ id: strin
                         aiReport.risk_level === "CRÍTICO" ? "text-red-400" :
                         aiReport.risk_level === "ALTO" ? "text-orange-400" :
                         aiReport.risk_level === "MEDIO" ? "text-yellow-400" : "text-blue-400"
-                      }`}>{aiReport.risk_level as string}</span>
+                      }`}>{String(aiReport.risk_level ?? "")}</span>
                     </div>
                   )}
                   {aiReport.risk_score !== undefined && (
