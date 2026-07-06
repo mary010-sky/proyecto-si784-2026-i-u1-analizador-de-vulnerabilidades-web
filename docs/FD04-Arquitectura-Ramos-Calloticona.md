@@ -419,20 +419,111 @@ graph LR
 
 #### 3.2.5 Diagrama de Clases
 
-(Ver diagrama completo en FD03 — Sección V.3.d)
-
-Los 7 modelos SQLAlchemy y sus relaciones clave:
+Los 7 modelos SQLAlchemy del sistema con atributos, métodos y relaciones:
 
 ```mermaid
 classDiagram
-    direction LR
+    class User {
+        -int id
+        -str name
+        -str email
+        -str hashed_password
+        -enum role
+        -bool is_active
+        -bool is_locked
+        -int failed_login_attempts
+        -datetime locked_until
+        -datetime created_at
+        +verify_password(pwd) bool
+        +generate_jwt() str
+        +lock_account() void
+        +unlock_account() void
+    }
+    class UserSession {
+        -int id
+        -int user_id
+        -str jti
+        -str ip_address
+        -str user_agent
+        -bool is_active
+        -datetime created_at
+        -datetime expires_at
+        +revoke() void
+        +revoke_all_user() void
+    }
+    class Scan {
+        -int id
+        -int user_id
+        -str target_url
+        -enum status
+        -enum depth
+        -str tech_stack
+        -bool use_ai
+        -int risk_score
+        -datetime started_at
+        -datetime completed_at
+        -str current_module
+        +calculate_risk_score() int
+        +mark_completed() void
+    }
+    class Vulnerability {
+        -int id
+        -int scan_id
+        -str module_name
+        -str vuln_type
+        -enum severity
+        -str url
+        -str parameter
+        -str evidence
+        -str description
+        -str solution
+        -float cvss_score
+        -str cwe_id
+        -JSON ai_analysis
+        +get_severity_label() str
+    }
+    class AuditLog {
+        -int id
+        -int user_id
+        -str action
+        -str ip_address
+        -str user_agent
+        -str endpoint
+        -str method
+        -int status_code
+        -JSON details
+        -datetime created_at
+    }
+    class Report {
+        -int id
+        -int scan_id
+        -int user_id
+        -enum report_type
+        -str file_path
+        -int file_size
+        -datetime created_at
+        +generate_pdf() bytes
+        +generate_html() str
+        +generate_json() dict
+    }
+    class PasswordReset {
+        -int id
+        -int user_id
+        -str token
+        -datetime expires_at
+        -bool is_used
+        -datetime created_at
+        +is_valid() bool
+        +mark_used() void
+    }
+
     User "1" --> "0..*" UserSession : has
-    User "1" --> "0..*" Scan : runs (1 activo a la vez)
+    User "1" --> "0..*" Scan : runs
     User "1" --> "0..*" Report : exports
-    User "1" --> "0..*" AuditLog : generates (read-only)
+    User "1" --> "0..*" AuditLog : generates
     User "1" --> "0..*" PasswordReset : requests
-    Scan "1" --> "0..*" Vulnerability : contains (0..N)
-    Scan "1" --> "0..*" Report : produces (0..3 formatos)
+    Scan "1" --> "0..*" Vulnerability : contains
+    Scan "1" --> "0..*" Report : produces
 ```
 
 #### 3.2.6 Diagrama de Base de Datos (Relacional)
