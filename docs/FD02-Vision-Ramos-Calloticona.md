@@ -221,22 +221,13 @@ Los usuarios acceden mediante un navegador web estándar (Chrome 120+, Firefox 1
 
 VulnScan Pro opera como aplicación web independiente de tres capas sobre un VPS Linux:
 
-```
-┌─────────────────────────────────────────────────────┐
-│  PRESENTACIÓN: Next.js 16 + TypeScript + TailwindCSS│
-│  Dashboard SOC, Escáner, Admin, Reportes — PM2:3000  │
-├─────────────────────────────────────────────────────┤
-│  NEGOCIO: FastAPI + Python 3.11 + Gunicorn          │
-│  13 módulos OWASP + Auth JWT + DeepSeek AI          │
-│  systemd servicio, puerto 8000                       │
-├─────────────────────────────────────────────────────┤
-│  DATOS: MySQL 8.0 + SQLAlchemy 2.0 (QueuePool)     │
-│  7 modelos: User, Session, Scan, Vulnerability,      │
-│  AuditLog, Report, PasswordReset                     │
-├─────────────────────────────────────────────────────┤
-│  INFRAESTRUCTURA: Nginx + UFW + Ubuntu 22.04 LTS    │
-│  IP: 149.34.48.176 — Rate limiting + SSL + Headers  │
-└─────────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    PRES["PRESENTACIÓN<br/>Next.js 16 + TypeScript + TailwindCSS<br/>Dashboard SOC, Escáner, Admin, Reportes — PM2:3000"]
+    NEG["NEGOCIO<br/>FastAPI + Python 3.11 + Gunicorn<br/>13 módulos OWASP + Auth JWT + DeepSeek AI<br/>systemd servicio, puerto 8000"]
+    DATOS["DATOS<br/>MySQL 8.0 + SQLAlchemy 2.0 (QueuePool)<br/>7 modelos: User, Session, Scan, Vulnerability, AuditLog, Report, PasswordReset"]
+    INFRA["INFRAESTRUCTURA<br/>Nginx + UFW + Ubuntu 22.04 LTS<br/>IP: 149.34.48.176 — Rate limiting + SSL + Headers"]
+    PRES --> NEG --> DATOS --> INFRA
 ```
 
 ### 4.2. Resumen de Capacidades

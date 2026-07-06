@@ -255,46 +255,37 @@ La vista de caso de uso describe las funcionalidades del sistema desde la perspe
 
 **Diagrama de Casos de Uso — Vista Global:**
 
-```
-                    ┌──────────────────────────────────────────────────────────────┐
-                    │                    VulnScan Pro                               │
-                    │                                                               │
-  ┌──────────┐     │  ┌─────────────────┐     ┌────────────────────────────────┐  │
-  │          │     │  │  UC-01          │     │  UC-02                         │  │
-  │ Usuario  │─────┼─►│  Registrarse    │     │  Iniciar Sesión / Logout       │  │
-  │          │     │  └─────────────────┘     └────────────────────────────────┘  │
-  └──────────┘     │                                                               │
-       │           │  ┌─────────────────┐     ┌────────────────────────────────┐  │
-       │           │  │  UC-03          │     │  UC-04                         │  │
-       └───────────┼─►│  Iniciar Escaneo│     │  Ver Resultados / Risk Score   │  │
-                   │  └─────────────────┘     └────────────────────────────────┘  │
-  ┌──────────┐     │                                                               │
-  │          │     │  ┌─────────────────┐     ┌────────────────────────────────┐  │
-  │ Analista │─────┼─►│  UC-05          │     │  UC-06                         │  │
-  │          │     │  │  Configurar     │     │  Exportar Reporte              │  │
-  └──────────┘     │  │  Escaneo Avanz. │     │  PDF / HTML / JSON             │  │
-       │           │  └─────────────────┘     └────────────────────────────────┘  │
-       │           │                                                               │
-       │           │  ┌─────────────────┐     ┌────────────────────────────────┐  │
-       │           │  │  UC-07          │     │  UC-08                         │  │
-       │           │  │  Ver Historial  │     │  Gestionar Perfil /            │  │
-       │           │  │  de Escaneos    │     │  Cambiar Contraseña            │  │
-       │           │  └─────────────────┘     └────────────────────────────────┘  │
-  ┌──────────┐     │                                                               │
-  │          │     │  ┌─────────────────┐     ┌────────────────────────────────┐  │
-  │  Admin   │─────┼─►│  UC-09          │     │  UC-10                         │  │
-  │          │     │  │  Gestionar      │     │  Ver Audit Log /               │  │
-  └──────────┘     │  │  Usuarios CRUD  │     │  Estadísticas Globales         │  │
-                   │  └─────────────────┘     └────────────────────────────────┘  │
-  ┌──────────┐     │                                                               │
-  │  Sistema │─────┼─►│ UC-11: Ejecutar 13 Módulos OWASP en Background          │  │
-  │ (interno)│     │                                                               │
-  └──────────┘     │  ┌─────────────────┐     ┌────────────────────────────────┐  │
-                   │  │  UC-12          │     │  UC-13                         │  │
-  ┌──────────┐     │  │  Analizar Vuln  │     │  Generar Risk Score            │  │
-  │DeepSeek  │─────┼─►│  con IA         │     │  + Reporte Ejecutivo IA        │  │
-  │   AI     │     │  └─────────────────┘     └────────────────────────────────┘  │
-  └──────────┘     └──────────────────────────────────────────────────────────────┘
+```mermaid
+graph LR
+    Usuario --> UC01["UC-01: Registrarse"]
+    Usuario --> UC02["UC-02: Iniciar Sesión / Logout"]
+    Usuario --> UC03["UC-03: Iniciar Escaneo"]
+    Usuario --> UC04["UC-04: Ver Resultados / Risk Score"]
+    Analista --> UC05["UC-05: Configurar Escaneo Avanzado"]
+    Analista --> UC06["UC-06: Exportar Reporte PDF/HTML/JSON"]
+    Analista --> UC07["UC-07: Ver Historial de Escaneos"]
+    Analista --> UC08["UC-08: Gestionar Perfil / Cambiar Contraseña"]
+    Admin --> UC09["UC-09: Gestionar Usuarios CRUD"]
+    Admin --> UC10["UC-10: Ver Audit Log / Estadísticas Globales"]
+    Sistema["Sistema (interno)"] --> UC11["UC-11: Ejecutar 13 Módulos OWASP en Background"]
+    DeepSeekAI["DeepSeek AI"] --> UC12["UC-12: Analizar Vuln con IA"]
+    DeepSeekAI --> UC13["UC-13: Generar Risk Score + Reporte Ejecutivo IA"]
+
+    subgraph VulnScanPro["VulnScan Pro"]
+        UC01
+        UC02
+        UC03
+        UC04
+        UC05
+        UC06
+        UC07
+        UC08
+        UC09
+        UC10
+        UC11
+        UC12
+        UC13
+    end
 ```
 
 **Casos de uso arquitectónicamente significativos** (los que más impactan la arquitectura):
@@ -315,138 +306,88 @@ La vista lógica describe la estructura interna del sistema: sus subsistemas, pa
 
 #### 3.2.1 Diagrama de Subsistemas (Paquetes)
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                       VulnScan Pro — Arquitectura Lógica                    │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  ┌────────────────────────────────────────────────────────────────────────┐ │
-│  │                  SUBSISTEMA: PRESENTACIÓN (Next.js 16)                  │ │
-│  │                                                                          │ │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌────────────┐  │ │
-│  │  │  Dashboard   │  │   Scanner    │  │    Admin     │  │  Profile   │  │ │
-│  │  │  SOC         │  │   Page       │  │    Panel     │  │  & History │  │ │
-│  │  │  /dashboard  │  │  /scanner    │  │    /admin    │  │  /profile  │  │ │
-│  │  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  └─────┬──────┘  │ │
-│  │         └─────────────────┴──────────────────┴──────────────┘  │        │ │
-│  │                           │ API Client (src/lib/api.ts)         │        │ │
-│  │                           │ Hooks: useAuth.ts                  │        │ │
-│  └───────────────────────────┼────────────────────────────────────────────┘ │
-│                              │ HTTP/HTTPS REST API (JSON)                    │
-│  ┌───────────────────────────▼────────────────────────────────────────────┐ │
-│  │                  SUBSISTEMA: NEGOCIO (FastAPI + Python)                  │ │
-│  │                                                                          │ │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌────────────┐  │ │
-│  │  │  auth_routes │  │  scan_routes │  │ admin_routes │  │  report_   │  │ │
-│  │  │  /auth/*     │  │  /scans/*    │  │  /admin/*    │  │  routes    │  │ │
-│  │  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  └─────┬──────┘  │ │
-│  │         └─────────────────┴──────────────────┴─────────────────┘        │ │
-│  │                                │                                         │ │
-│  │  ┌────────────────────────────▼────────────────────────────────────┐    │ │
-│  │  │                    SERVICIOS DEL SISTEMA                         │    │ │
-│  │  │                                                                   │    │ │
-│  │  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              │    │ │
-│  │  │  │ scanner.py  │  │ ai_service  │  │  auth.py    │              │    │ │
-│  │  │  │ 13 módulos  │  │  .py        │  │ JWT+bcrypt  │              │    │ │
-│  │  │  │ OWASP       │  │ DeepSeek+FB │  │ RBAC        │              │    │ │
-│  │  │  └─────────────┘  └─────────────┘  └─────────────┘              │    │ │
-│  │  └────────────────────────────────────────────────────────────────┘    │ │
-│  │                                │                                         │ │
-│  │  ┌────────────────────────────▼────────────────────────────────────┐    │ │
-│  │  │                    MODELO DE DATOS (SQLAlchemy 2.0)              │    │ │
-│  │  │  User | UserSession | Scan | Vulnerability | AuditLog |          │    │ │
-│  │  │  Report | PasswordReset                                          │    │ │
-│  │  └────────────────────────────────────────────────────────────────┘    │ │
-│  └───────────────────────────────────────────────────────────────────────┘ │
-│                              │ SQLAlchemy ORM                               │
-│  ┌───────────────────────────▼────────────────────────────────────────────┐ │
-│  │                  SUBSISTEMA: DATOS (MySQL 8.0)                          │ │
-│  │    Users | user_sessions | scans | vulnerabilities | audit_logs |       │ │
-│  │    reports | password_resets                                            │ │
-│  └────────────────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    subgraph PRES["SUBSISTEMA: PRESENTACIÓN (Next.js 16)"]
+        D1["Dashboard SOC\n/dashboard"] & D2["Scanner Page\n/scanner"] & D3["Admin Panel\n/admin"] & D4["Profile & History\n/profile"] --> APIC["API Client — src/lib/api.ts\nHooks: useAuth.ts"]
+    end
+    subgraph NEG["SUBSISTEMA: NEGOCIO (FastAPI + Python)"]
+        R1["auth_routes\n/auth/*"] & R2["scan_routes\n/scans/*"] & R3["admin_routes\n/admin/*"] & R4["report_routes"] --> SVC
+        subgraph SVC["SERVICIOS DEL SISTEMA"]
+            S1["scanner.py\n13 módulos OWASP"] & S2["ai_service.py\nDeepSeek+Fallback"] & S3["auth.py\nJWT+bcrypt RBAC"]
+        end
+        SVC --> MDL["MODELO DE DATOS (SQLAlchemy 2.0)\nUser | UserSession | Scan | Vulnerability | AuditLog | Report | PasswordReset"]
+    end
+    subgraph DATOS["SUBSISTEMA: DATOS (MySQL 8.0)"]
+        DB1["users | user_sessions | scans | vulnerabilities | audit_logs | reports | password_resets"]
+    end
+    PRES -- "HTTP/HTTPS REST API (JSON)" --> NEG
+    NEG -- "SQLAlchemy ORM" --> DATOS
 ```
 
 #### 3.2.2 Diagrama de Secuencia (Vista de Diseño)
 
 **Escenario: Escaneo completo con análisis IA**
 
-```
-Frontend       auth.py     scan_routes.py   scanner.py    ai_service.py   MySQL
-    │              │              │               │               │           │
-    │─POST /scans──────────────►│               │               │           │
-    │              │             │─verify_token()►               │           │
-    │              │◄──user_id──│               │               │           │
-    │              │             │─validate_url()►               │           │
-    │              │             │─check_active_scan()────────────────────►│
-    │              │             │◄──none────────────────────────────────-│
-    │              │             │─INSERT Scan(pending)───────────────────►│
-    │              │             │◄──scan_id──────────────────────────────│
-    │              │             │─BackgroundTask(run_full_scan)───────────►
-    │◄─202{scan_id}│             │               │               │           │
-    │              │             │               │               │           │
-    │  [3s polling]│             │               │               │           │
-    │─GET/scans/1──────────────►│               │               │           │
-    │◄──{status:running,module:sqli}             │               │           │
-    │              │             │               │               │           │
-    │              │             │   [background]│               │           │
-    │              │             │               │─run_headers()             │
-    │              │             │               │─run_ssl()                 │
-    │              │             │               │─run_sqli()                │
-    │              │             │               │─INSERT Vuln(sqli,HIGH)────►│
-    │              │             │               │─run_xss()                 │
-    │              │             │               │─...13 modules             │
-    │              │             │               │─analyze_vuln(vuln)───────►│
-    │              │             │               │               │─DeepSeek API│
-    │              │             │               │◄──{cvss,cwe,code}──────  │
-    │              │             │               │─UPDATE Vuln(ai)───────────►│
-    │              │             │               │─UPDATE Scan(completed)────►│
-    │              │             │               │─INSERT AuditLog(scan_done)►│
-    │              │             │               │               │           │
-    │  [3s polling]│             │               │               │           │
-    │─GET/scans/1──────────────►│               │               │           │
-    │◄──{status:completed,vulns:[...],risk_score:75}             │           │
-    │  [muestra resultados]     │               │               │           │
+```mermaid
+sequenceDiagram
+    participant FE as Frontend
+    participant Auth as auth.py
+    participant SR as scan_routes.py
+    participant Scanner as scanner.py
+    participant AI as ai_service.py
+    participant MySQL
+
+    FE->>SR: POST /scans
+    SR->>Auth: verify_token()
+    Auth-->>SR: user_id
+    SR->>SR: validate_url()
+    SR->>MySQL: check_active_scan()
+    MySQL-->>SR: none
+    SR->>MySQL: INSERT Scan(pending)
+    MySQL-->>SR: scan_id
+    SR->>Scanner: BackgroundTask(run_full_scan)
+    SR-->>FE: 202 {scan_id}
+
+    loop polling cada 3s
+        FE->>SR: GET /scans/1
+        SR-->>FE: {status: running, module: sqli}
+    end
+
+    Note over Scanner: [background]
+    Scanner->>Scanner: run_headers()
+    Scanner->>Scanner: run_ssl()
+    Scanner->>Scanner: run_sqli()
+    Scanner->>MySQL: INSERT Vuln(sqli, HIGH)
+    Scanner->>Scanner: run_xss()
+    Scanner->>Scanner: ...13 modules
+    Scanner->>AI: analyze_vuln(vuln)
+    AI->>AI: DeepSeek API
+    AI-->>Scanner: {cvss, cwe, code}
+    Scanner->>MySQL: UPDATE Vuln(ai)
+    Scanner->>MySQL: UPDATE Scan(completed)
+    Scanner->>MySQL: INSERT AuditLog(scan_done)
+
+    FE->>SR: GET /scans/1
+    SR-->>FE: {status: completed, vulns:[...], risk_score: 75}
+    Note over FE: muestra resultados
 ```
 
 #### 3.2.3 Diagrama de Colaboración (Vista de Diseño)
 
 Los objetos que colaboran en el caso de uso UC-03 "Iniciar Escaneo":
 
-```
-┌──────────────┐   POST /scans    ┌──────────────┐
-│  Frontend    │─────────────────►│  scan_routes │
-│  (Scanner    │                  │  .py         │
-│   Page)      │◄── 202 scan_id──│              │
-└──────┬───────┘                  └──────┬───────┘
-       │                                 │
-       │ polling                         │ verify JWT
-       │ GET /scans/{id}                 ▼
-       │                          ┌──────────────┐
-       │                          │   auth.py    │
-       │                          │  get_current_│
-       │                          │  user()      │
-       │                          └──────┬───────┘
-       │                                 │ user object
-       │                                 ▼
-       │                          ┌──────────────┐
-       │                          │   MySQL      │
-       │                          │  INSERT Scan │
-       │                          └──────┬───────┘
-       │                                 │
-       │                                 ▼
-       │                          ┌──────────────┐
-       │                          │ Background   │
-       │                          │ Task         │
-       │                          └──────┬───────┘
-       │                                 │
-       │                    ┌────────────┴─────────────────┐
-       │                    ▼                               ▼
-       │             ┌──────────────┐              ┌──────────────┐
-       │             │  scanner.py  │              │ ai_service   │
-       │             │  run_full_   │─analyzeVuln─►│  .py         │
-       │             │  scan()      │              │  DeepSeek    │
-       │             └──────────────┘              └──────────────┘
+```mermaid
+graph TD
+    FE["Frontend\nScanner Page"] -- "POST /scans" --> SR["scan_routes.py"]
+    SR -- "202 scan_id" --> FE
+    FE -- "polling GET /scans/id" --> SR
+    SR -- "verify JWT" --> AUTH["auth.py\nget_current_user()"]
+    AUTH -- "user object" --> MYSQL["MySQL\nINSERT Scan"]
+    MYSQL --> BG["Background Task"]
+    BG --> SCANNER["scanner.py\nrun_full_scan()"]
+    BG --> AISVC["ai_service.py\nDeepSeek"]
+    SCANNER -- "analyzeVuln" --> AISVC
        │
        └──── GET cada 3s ──── status: in_progress → completed
 ```
@@ -455,44 +396,27 @@ Los objetos que colaboran en el caso de uso UC-03 "Iniciar Escaneo":
 
 Estado del sistema durante un escaneo activo:
 
-```
-scan:Scan                           user:User
-─────────────────────               ──────────────────────
-id = 42                             id = 7
-user_id = 7                         name = "Mariela Ramos"
-target_url = "https://test.com"     email = "m@upt.pe"
-status = "in_progress"              role = "analyst"
-depth = "full"                      is_active = true
-tech_stack = "php"                  is_locked = false
-use_ai = true
-risk_score = 0 (calculando)         session:UserSession
-started_at = "2026-04-04 10:00"     ──────────────────────
-current_module = "sqli"             id = 15
-                                    user_id = 7
-                                    jti = "abc123xyz"
-vuln1:Vulnerability                 is_active = true
-──────────────────────
-id = 101
-scan_id = 42
-module_name = "sqli"
-vuln_type = "SQL Injection"
-severity = "HIGH"
-url = "https://test.com/login"
-parameter = "username"
-evidence = "error: you have..."
-cvss_score = 8.2
-cwe_id = "CWE-89"
-ai_analysis = {...}
-
-auditLog:AuditLog
-──────────────────────
-id = 500
-user_id = 7
-action = "scan_started"
-ip_address = "190.40.x.x"
-endpoint = "POST /scans"
-status_code = 202
-created_at = "2026-04-04 10:00"
+```mermaid
+graph LR
+    subgraph USER["user:User"]
+        U1["id = 7<br/>name = Mariela Ramos<br/>email = m@upt.pe<br/>role = analyst<br/>is_active = true<br/>is_locked = false"]
+    end
+    subgraph SESSION["session:UserSession"]
+        S1["id = 15<br/>user_id = 7<br/>jti = abc123xyz<br/>is_active = true"]
+    end
+    subgraph SCAN["scan:Scan"]
+        SC1["id = 42<br/>user_id = 7<br/>target_url = https://test.com<br/>status = in_progress<br/>depth = full<br/>tech_stack = php<br/>use_ai = true<br/>risk_score = 0 (calculando)<br/>started_at = 2026-04-04 10:00<br/>current_module = sqli"]
+    end
+    subgraph VULN["vuln1:Vulnerability"]
+        V1["id = 101<br/>scan_id = 42<br/>module_name = sqli<br/>vuln_type = SQL Injection<br/>severity = HIGH<br/>url = https://test.com/login<br/>parameter = username<br/>evidence = error: you have...<br/>cvss_score = 8.2<br/>cwe_id = CWE-89"]
+    end
+    subgraph AUDIT["auditLog:AuditLog"]
+        A1["id = 500<br/>user_id = 7<br/>action = scan_started<br/>ip_address = 190.40.x.x<br/>endpoint = POST /scans<br/>status_code = 202<br/>created_at = 2026-04-04 10:00"]
+    end
+    USER --> SCAN
+    USER --> SESSION
+    SCAN --> VULN
+    SCAN --> AUDIT
 ```
 
 #### 3.2.5 Diagrama de Clases
@@ -501,73 +425,109 @@ created_at = "2026-04-04 10:00"
 
 Los 7 modelos SQLAlchemy y sus relaciones clave:
 
-```
-User 1──────────────────── *.UserSession
-User 1──────────────────── *.Scan
-User 1──────────────────── *.Report
-User 1──────────────────── *.AuditLog
-User 1──────────────────── *.PasswordReset
-Scan 1──────────────────── *.Vulnerability
-Scan 1──────────────────── *.Report
-
-Cardinalidades:
-- Un User tiene múltiples Scans (1 activo a la vez)
-- Un Scan tiene múltiples Vulnerabilities (0..N)
-- Un Scan tiene múltiples Reports (0..3 formatos)
-- Un User tiene múltiples UserSessions (1 activa típicamente)
-- Un User tiene múltiples AuditLogs (de solo lectura)
+```mermaid
+classDiagram
+    direction LR
+    User "1" --> "0..*" UserSession : has
+    User "1" --> "0..*" Scan : runs (1 activo a la vez)
+    User "1" --> "0..*" Report : exports
+    User "1" --> "0..*" AuditLog : generates (read-only)
+    User "1" --> "0..*" PasswordReset : requests
+    Scan "1" --> "0..*" Vulnerability : contains (0..N)
+    Scan "1" --> "0..*" Report : produces (0..3 formatos)
 ```
 
 #### 3.2.6 Diagrama de Base de Datos (Relacional)
 
-```
-┌──────────────────────────────────────────────────────────────────────────────────┐
-│                         ESQUEMA MySQL 8.0 — VulnScan Pro                         │
-├──────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                   │
-│  ┌──────────────────────┐    ┌──────────────────────┐   ┌────────────────────┐  │
-│  │  users               │    │  user_sessions        │   │  password_resets   │  │
-│  ├──────────────────────┤    ├──────────────────────┤   ├────────────────────┤  │
-│  │ PK id INT            │◄───┤ PK id INT             │   │ PK id INT          │  │
-│  │    name VARCHAR(100) │1   │ FK user_id INT        │◄──┤ FK user_id INT     │  │
-│  │    email VARCHAR(150)│    │    jti VARCHAR(255)   │   │    token VARCHAR   │  │
-│  │    hashed_password   │    │    ip_address         │   │    expires_at      │  │
-│  │    role ENUM         │    │    user_agent         │   │    is_used BOOL    │  │
-│  │    is_active BOOL    │    │    is_active BOOL     │   │    created_at      │  │
-│  │    is_locked BOOL    │    │    created_at         │   └────────────────────┘  │
-│  │    failed_attempts   │    │    expires_at         │                           │
-│  │    locked_until      │    └──────────────────────┘                           │
-│  │    created_at        │                                                        │
-│  └──────────┬───────────┘                                                        │
-│             │ 1                                                                   │
-│             │                                                                     │
-│  ┌──────────▼───────────┐    ┌──────────────────────┐   ┌────────────────────┐  │
-│  │  scans               │    │  vulnerabilities      │   │  audit_logs        │  │
-│  ├──────────────────────┤    ├──────────────────────┤   ├────────────────────┤  │
-│  │ PK id INT            │1──►│ PK id INT             │   │ PK id INT          │  │
-│  │ FK user_id INT       │    │ FK scan_id INT        │   │ FK user_id INT     │  │
-│  │    target_url        │    │    module_name        │   │    action          │  │
-│  │    status ENUM       │    │    vuln_type          │   │    ip_address      │  │
-│  │    depth ENUM        │    │    severity ENUM      │   │    user_agent      │  │
-│  │    tech_stack        │    │    url TEXT           │   │    endpoint        │  │
-│  │    use_ai BOOL       │    │    parameter          │   │    method          │  │
-│  │    risk_score INT    │    │    evidence TEXT      │   │    status_code     │  │
-│  │    started_at        │    │    description TEXT   │   │    details JSON    │  │
-│  │    completed_at      │    │    solution TEXT      │   │    created_at      │  │
-│  │    current_module    │    │    cvss_score FLOAT   │   └────────────────────┘  │
-│  └──────────┬───────────┘    │    cwe_id VARCHAR     │                           │
-│             │ 1              │    ai_analysis JSON   │   ┌────────────────────┐  │
-│             │                │    created_at         │   │  reports           │  │
-│             └───────────────►└──────────────────────┘   ├────────────────────┤  │
-│                                                          │ PK id INT          │  │
-│                                                          │ FK scan_id INT     │  │
-│                                                          │ FK user_id INT     │  │
-│                                                          │    report_type     │  │
-│                                                          │    file_path       │  │
-│                                                          │    file_size INT   │  │
-│                                                          │    created_at      │  │
-│                                                          └────────────────────┘  │
-└──────────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+erDiagram
+    users {
+        int id PK
+        varchar name
+        varchar email
+        text hashed_password
+        enum role
+        bool is_active
+        bool is_locked
+        int failed_attempts
+        datetime locked_until
+        datetime created_at
+    }
+    user_sessions {
+        int id PK
+        int user_id FK
+        varchar jti
+        varchar ip_address
+        varchar user_agent
+        bool is_active
+        datetime created_at
+        datetime expires_at
+    }
+    password_resets {
+        int id PK
+        int user_id FK
+        varchar token
+        datetime expires_at
+        bool is_used
+        datetime created_at
+    }
+    scans {
+        int id PK
+        int user_id FK
+        text target_url
+        enum status
+        enum depth
+        varchar tech_stack
+        bool use_ai
+        int risk_score
+        datetime started_at
+        datetime completed_at
+        varchar current_module
+    }
+    vulnerabilities {
+        int id PK
+        int scan_id FK
+        varchar module_name
+        varchar vuln_type
+        enum severity
+        text url
+        varchar parameter
+        text evidence
+        text description
+        text solution
+        float cvss_score
+        varchar cwe_id
+        json ai_analysis
+        datetime created_at
+    }
+    audit_logs {
+        int id PK
+        int user_id FK
+        varchar action
+        varchar ip_address
+        varchar user_agent
+        varchar endpoint
+        varchar method
+        int status_code
+        json details
+        datetime created_at
+    }
+    reports {
+        int id PK
+        int scan_id FK
+        int user_id FK
+        enum report_type
+        varchar file_path
+        int file_size
+        datetime created_at
+    }
+    users ||--o{ user_sessions : "has"
+    users ||--o{ scans : "runs"
+    users ||--o{ reports : "exports"
+    users ||--o{ audit_logs : "generates"
+    users ||--o{ password_resets : "requests"
+    scans ||--o{ vulnerabilities : "contains"
+    scans ||--o{ reports : "produces"
 ```
 
 <div style="page-break-after: always;"></div>
@@ -631,54 +591,21 @@ vulnerabilidad/                         ← Raíz del repositorio
 
 #### 3.3.2 Diagrama de Arquitectura del Sistema (Diagrama de Componentes)
 
-```
-┌────────────────────────────────────────────────────────────────────┐
-│                    VulnScan Pro — Componentes                       │
-│                                                                     │
-│  ┌──────────────────────────────────────────────────────────────┐  │
-│  │                 «component» Next.js App                       │  │
-│  │                                                               │  │
-│  │  ┌─────────────┐  ┌─────────────┐  ┌───────────────────────┐ │  │
-│  │  │  Dashboard  │  │   Scanner   │  │    Admin Panel        │ │  │
-│  │  │  Component  │  │  Component  │  │    Component          │ │  │
-│  │  └──────┬──────┘  └──────┬──────┘  └──────────┬────────────┘ │  │
-│  │         └───────────────┬┴───────────────────┘              │  │
-│  │                         │ API Client (api.ts)                │  │
-│  └─────────────────────────┼───────────────────────────────────┘  │
-│                             │ HTTPS REST API                        │
-│  ┌──────────────────────────▼──────────────────────────────────┐  │
-│  │               «component» FastAPI App (main.py)              │  │
-│  │                                                               │  │
-│  │  ┌───────────────┐  ┌───────────────┐  ┌──────────────────┐ │  │
-│  │  │ «component»   │  │ «component»   │  │  «component»     │ │  │
-│  │  │ Auth Router   │  │ Scan Router   │  │  Admin Router    │ │  │
-│  │  └───────┬───────┘  └───────┬───────┘  └─────────┬────────┘ │  │
-│  │          │                  │                     │          │  │
-│  │  ┌───────▼──────────────────▼─────────────────────▼───────┐  │  │
-│  │  │                    MIDDLEWARE LAYER                      │  │  │
-│  │  │   Security Headers │ CORS │ Rate Limiting │ Audit Log   │  │  │
-│  │  └──────────────────────────────────────────────────────────┘  │  │
-│  │                                                               │  │
-│  │  ┌───────────────┐  ┌───────────────┐  ┌──────────────────┐ │  │
-│  │  │ «component»   │  │ «component»   │  │  «component»     │ │  │
-│  │  │ scanner.py    │  │ ai_service.py │  │  report_routes   │ │  │
-│  │  │ (13 módulos)  │  │ (DeepSeek+FB) │  │  (PDF/HTML/JSON) │ │  │
-│  │  └───────┬───────┘  └───────┬───────┘  └─────────┬────────┘ │  │
-│  │          │                  │                     │          │  │
-│  └──────────┼──────────────────┼─────────────────────┼──────────┘  │
-│             │                  │ HTTPS               │              │
-│  ┌──────────▼──────────┐   ┌───▼───────────────┐   │              │
-│  │  «component»        │   │ «external system» │   │              │
-│  │  MySQL 8.0          │   │  DeepSeek AI API  │   │              │
-│  │  SQLAlchemy 2.0     │   │  api.deepseek.com │   │              │
-│  │  QueuePool          │   └───────────────────┘   │              │
-│  └─────────────────────┘                           │              │
-│                                                     │              │
-│  ┌──────────────────────────────────────────────────▼────────────┐ │
-│  │              «component» WeasyPrint PDF Engine                 │ │
-│  │           Genera PDF desde template HTML + CSS                 │ │
-│  └────────────────────────────────────────────────────────────────┘ │
-└────────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    subgraph NextApp["«component» Next.js App"]
+        DASH["Dashboard Component"] & SCAN["Scanner Component"] & ADMIN["Admin Panel Component"] --> APIC["API Client — api.ts"]
+    end
+    subgraph FastAPI["«component» FastAPI App (main.py)"]
+        AUTH_R["«component» Auth Router"] & SCAN_R["«component» Scan Router"] & ADMIN_R["«component» Admin Router"] --> MW["MIDDLEWARE LAYER<br/>Security Headers | CORS | Rate Limiting | Audit Log"]
+        MW --> SCANNER["«component» scanner.py<br/>(13 módulos)"]
+        MW --> AISVC["«component» ai_service.py<br/>(DeepSeek+Fallback)"]
+        MW --> REPORT["«component» report_routes<br/>(PDF/HTML/JSON)"]
+    end
+    APIC -- "HTTPS REST API" --> FastAPI
+    SCANNER --> MySQL["«component» MySQL 8.0<br/>SQLAlchemy 2.0 QueuePool"]
+    AISVC -- "HTTPS" --> DEEPSEEK["«external system»<br/>DeepSeek AI API<br/>api.deepseek.com"]
+    REPORT --> WEASY["«component» WeasyPrint PDF Engine<br/>Genera PDF desde template HTML + CSS"]
 ```
 
 <div style="page-break-after: always;"></div>
@@ -691,113 +618,58 @@ La vista de procesos describe el comportamiento del sistema en tiempo de ejecuci
 
 **Proceso principal: Ciclo de vida completo de un escaneo DAST**
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│              PROCESO COMPLETO DE ESCANEO DAST — VulnScan Pro                │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-[INICIO]
-   │
-   ▼
-[Usuario autentica JWT] ──── token inválido/expirado ────► [HTTP 401 Unauthorized]
-   │ token válido
-   ▼
-[Validar URL objetivo]
-   ├── formato inválido ──────────────────────────────────► [HTTP 422 Unprocessable]
-   ├── IP privada/localhost ──────────────────────────────► [HTTP 400 Bad Request]
-   └── formato válido
-          │
-          ▼
-[Verificar escaneo activo del usuario]
-   ├── ya tiene escaneo activo ───────────────────────────► [HTTP 409 Conflict]
-   └── sin escaneo activo
-          │
-          ▼
-[Crear Scan en MySQL con status="pending"]
-   │
-   ▼
-[Retornar HTTP 202 Accepted + scan_id al frontend]
-   │
-   ├── [Frontend: iniciar polling GET /scans/{id} cada 3s]
-   │
-   ▼
-[BackgroundTask: iniciar run_full_scan()]
-   │
-   ▼
-[UPDATE Scan: status="in_progress", started_at=now()]
-   │
-   ▼
-┌──────────────────────────────────────────────────────────────────────────┐
-│              EJECUCIÓN DE MÓDULOS (secuencial controlado)                 │
-│                                                                           │
-│  Para cada módulo en [headers, ssl, sensitive_files, xss, sqli,          │
-│                        csrf, ssrf, lfi, cmd_injection, open_redirect,    │
-│                        http_methods, error_disclosure, crawl]:           │
-│                                                                           │
-│  [UPDATE Scan: current_module=módulo_actual]                             │
-│           │                                                               │
-│           ▼                                                               │
-│  [Ejecutar módulo con timeout configurado]                               │
-│           │                                                               │
-│  ┌── timeout ──► [Registrar resultado "timeout" para este módulo]        │
-│  │               [Continuar con siguiente módulo]                        │
-│  │                                                                        │
-│  └── completado                                                           │
-│           │                                                               │
-│           ▼                                                               │
-│  [Para cada vulnerabilidad encontrada:]                                  │
-│           │                                                               │
-│           ▼                                                               │
-│  [INSERT Vulnerability en MySQL]                                         │
-│           │                                                               │
-│  ┌── use_ai=True ──► [Llamar ai_service.analyze_vulnerability()]         │
-│  │                        │                                              │
-│  │              ┌── API disponible ──► [Actualizar Vuln con IA]          │
-│  │              └── API no disponible ─► [Fallback local para vuln]      │
-│  │                                                                        │
-│  └── use_ai=False ─► [Continuar sin análisis IA]                        │
-└──────────────────────────────────────────────────────────────────────────┘
-   │
-   ▼
-[Calcular risk_score = min(100, Σ(Críticas×10 + Altas×7 + Medias×3 + Bajas×1))]
-   │
-   ▼
-[UPDATE Scan: status="completed", completed_at=now(), risk_score=X]
-   │
-   ▼
-[INSERT AuditLog: action="scan_completed", scan_id, risk_score]
-   │
-   ▼
-[Frontend polling detecta status="completed"]
-   │
-   ▼
-[Frontend redirige a resultados del escaneo]
-   │
-   ▼
-[FIN DEL PROCESO]
+```mermaid
+flowchart TD
+    A([INICIO]) --> B[Usuario autentica JWT]
+    B -- "token inválido/expirado" --> ERR1[HTTP 401 Unauthorized]
+    B -- "token válido" --> C[Validar URL objetivo]
+    C -- "formato inválido" --> ERR2[HTTP 422 Unprocessable]
+    C -- "IP privada/localhost" --> ERR3[HTTP 400 Bad Request]
+    C -- "formato válido" --> D[Verificar escaneo activo del usuario]
+    D -- "ya tiene escaneo activo" --> ERR4[HTTP 409 Conflict]
+    D -- "sin escaneo activo" --> E["Crear Scan en MySQL con status='pending'"]
+    E --> F["Retornar HTTP 202 Accepted + scan_id al frontend"]
+    F --> G["Frontend: iniciar polling GET /scans/id cada 3s"]
+    F --> H["BackgroundTask: iniciar run_full_scan()"]
+    H --> I["UPDATE Scan: status='in_progress', started_at=now()"]
+    I --> J{"EJECUCIÓN DE MÓDULOS (secuencial controlado)\nheaders, ssl, sensitive_files, xss, sqli, csrf,\nssrf, lfi, cmd_injection, open_redirect,\nhttp_methods, error_disclosure, crawl"}
+    J --> K[UPDATE Scan: current_module=módulo_actual]
+    K --> L[Ejecutar módulo con timeout configurado]
+    L -- timeout --> M["Registrar resultado 'timeout' — continuar con siguiente módulo"]
+    M --> J
+    L -- completado --> N[Para cada vulnerabilidad encontrada]
+    N --> O[INSERT Vulnerability en MySQL]
+    O -- "use_ai=True" --> P["Llamar ai_service.analyze_vulnerability()"]
+    P -- "API disponible" --> Q[Actualizar Vuln con IA]
+    P -- "API no disponible" --> R[Fallback local para vuln]
+    Q & R --> S
+    O -- "use_ai=False" --> S[Continuar con siguiente módulo]
+    S --> T["Calcular risk_score = min(100, Σ(Críticas×10 + Altas×7 + Medias×3 + Bajas×1))"]
+    T --> U["UPDATE Scan: status='completed', completed_at=now(), risk_score=X"]
+    U --> V["INSERT AuditLog: action='scan_completed', scan_id, risk_score"]
+    V --> W["Frontend polling detecta status='completed'"]
+    W --> X[Frontend redirige a resultados del escaneo]
+    X --> Z([FIN DEL PROCESO])
 ```
 
 **Procesos del sistema en producción (concurrencia):**
 
-```
-VPS Linux (149.34.48.176)
-│
-├── Nginx (proceso principal)
-│   ├── Worker 1: manejar peticiones HTTP/HTTPS entrantes
-│   ├── Rate limiting: 3 zonas (general/api/login)
-│   └── Proxy pass → localhost:8000 (backend) / localhost:3000 (frontend)
-│
-├── Gunicorn (4 workers pre-fork)
-│   ├── Worker 1: atender petición API 1
-│   ├── Worker 2: atender petición API 2
-│   ├── Worker 3: atender petición API 3
-│   └── Worker 4: atender petición API 4 + BackgroundTasks (escaneos)
-│
-├── PM2 (Next.js app)
-│   └── Node.js process: fronted en puerto 3000
-│
-└── MySQL 8.0 (daemon)
-    └── QueuePool: hasta 30 conexiones simultáneas (pool_size=10 + max_overflow=20)
+```mermaid
+graph TD
+    VPS["VPS Linux — 149.34.48.176"]
+    VPS --> NGINX["Nginx (proceso principal)"]
+    NGINX --> NW1["Worker 1: manejar peticiones HTTP/HTTPS entrantes"]
+    NGINX --> NRL["Rate limiting: 3 zonas — general/api/login"]
+    NGINX --> NP["Proxy pass → localhost:8000 backend / localhost:3000 frontend"]
+    VPS --> GUN["Gunicorn (4 workers pre-fork)"]
+    GUN --> GW1["Worker 1: atender petición API 1"]
+    GUN --> GW2["Worker 2: atender petición API 2"]
+    GUN --> GW3["Worker 3: atender petición API 3"]
+    GUN --> GW4["Worker 4: atender petición API 4 + BackgroundTasks (escaneos)"]
+    VPS --> PM2["PM2 (Next.js app)"]
+    PM2 --> NODE["Node.js process: frontend en puerto 3000"]
+    VPS --> MYSQL["MySQL 8.0 (daemon)"]
+    MYSQL --> POOL["QueuePool: hasta 30 conexiones simultáneas (pool_size=10 + max_overflow=20)"]
 ```
 
 <div style="page-break-after: always;"></div>
@@ -808,70 +680,35 @@ La vista de despliegue muestra la distribución física del sistema sobre los no
 
 #### 3.5.1 Diagrama de Despliegue
 
-```
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                    INFRAESTRUCTURA VulnScan Pro — Producción                  │
-└───────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    subgraph Cliente["«device» Cliente — Navegador Web\nChrome 120+ / Firefox 120+ — Windows / macOS / Linux"]
+        BUNDLE["«artifact» Next.js Bundle\nJavaScript/CSS — Cargado desde VPS"]
+    end
 
-  ┌─────────────────────────────┐        ┌──────────────────────────────────────┐
-  │  «device»                   │        │  «device»                            │
-  │  Cliente (Navegador Web)     │        │  VPS Linux                           │
-  │                             │        │  Ubuntu 22.04 LTS                    │
-  │  Chrome 120+ / Firefox 120+ │        │  IP: 149.34.48.176                   │
-  │  Windows / macOS / Linux    │        │  2 vCPU / 4 GB RAM / 50 GB SSD       │
-  │                             │        │                                      │
-  │  ┌─────────────────────┐    │        │  ┌──────────────────────────────────┐│
-  │  │  «artifact»         │    │        │  │  «execution environment»         ││
-  │  │  Next.js Bundle     │    │ HTTPS  │  │  Nginx 1.24 (proxy reverso)      ││
-  │  │  (JavaScript/CSS)   │◄───┼────────┼──│  Puerto 80 (→ 443)               ││
-  │  │  Cargado desde VPS  │    │        │  │  Puerto 443 (TLS 1.2/1.3)        ││
-  │  └─────────────────────┘    │        │  │  Rate limit: 10 req/s general    ││
-  │                             │        │  │  Rate limit: 5 req/min login     ││
-  │  Envía peticiones:          │        │  │  Headers: CSP, HSTS, X-Frame     ││
-  │  - GET pages (SSR)          │        │  └──────────────────┬───────────────┘│
-  │  - REST API calls (JSON)    │        │                     │                │
-  └─────────────────────────────┘        │        ┌────────────┴────────────┐   │
-                                         │        │                         │   │
-                                         │  ┌─────▼─────────────┐  ┌───────▼──┐│
-                                         │  │  «executable»      │  │«exec env»││
-                                         │  │  Next.js 16 App    │  │ FastAPI  ││
-                                         │  │  PM2 Process Mgr   │  │ Gunicorn ││
-                                         │  │  Puerto 3000       │  │ 4 workers││
-                                         │  │  Node.js 20        │  │ Puerto   ││
-                                         │  │                    │  │ 8000     ││
-                                         │  │  ┌──────────────┐  │  │          ││
-                                         │  │  │ Frontend     │  │  │ scanner  ││
-                                         │  │  │ Components   │  │  │ auth     ││
-                                         │  │  │ Dashboard    │  │  │ reports  ││
-                                         │  │  │ Scanner UI   │  │  │ ai_svc   ││
-                                         │  │  └──────────────┘  │  └────┬─────┘│
-                                         │  └────────────────────┘       │      │
-                                         │                                │      │
-                                         │  ┌─────────────────────────────▼────┐ │
-                                         │  │  «database»                       │ │
-                                         │  │  MySQL 8.0                        │ │
-                                         │  │  Puerto 3306 (localhost ONLY)     │ │
-                                         │  │  Base: vulnscan_db                │ │
-                                         │  │  7 tablas — QueuePool 10+20       │ │
-                                         │  └───────────────────────────────────┘ │
-                                         │                                        │
-                                         │  ┌──────────────────────────────────┐  │
-                                         │  │  «firewall»                       │  │
-                                         │  │  UFW (iptables)                   │  │
-                                         │  │  ALLOW: 22/tcp (SSH), 80/tcp,    │  │
-                                         │  │          443/tcp                  │  │
-                                         │  │  DENY: todo lo demás (incluye    │  │
-                                         │  │         3306, 8000, 3000)        │  │
-                                         │  └──────────────────────────────────┘  │
-                                         └──────────────────────────────────────┘
+    subgraph VPS["«device» VPS Linux — Ubuntu 22.04 LTS\nIP: 149.34.48.176 — 2 vCPU / 4 GB RAM / 50 GB SSD"]
+        subgraph NGINX["«execution environment» Nginx 1.24\nPuerto 80 → 443 / Puerto 443 (TLS 1.2/1.3)\nRate limit: 10 req/s general, 5 req/min login\nHeaders: CSP, HSTS, X-Frame"]
+        end
+        subgraph NEXTAPP["«executable» Next.js 16 App\nPM2 Process Mgr — Puerto 3000 — Node.js 20"]
+            FEC["Frontend Components\nDashboard | Scanner UI"]
+        end
+        subgraph FASTAPI["«exec env» FastAPI / Gunicorn 4 workers — Puerto 8000"]
+            SCANNER_COMP["scanner | auth | reports | ai_svc"]
+        end
+        subgraph MYSQL["«database» MySQL 8.0\nPuerto 3306 (localhost ONLY)\nBase: vulnscan_db — 7 tablas — QueuePool 10+20"]
+        end
+        subgraph UFW["«firewall» UFW (iptables)\nALLOW: 22/tcp SSH, 80/tcp, 443/tcp\nDENY: 3306, 8000, 3000"]
+        end
+        NGINX --> NEXTAPP
+        NGINX --> FASTAPI
+        FASTAPI --> MYSQL
+    end
 
-  ┌──────────────────────────────────────┐
-  │  «external system»                   │
-  │  DeepSeek AI API                     │
-  │  api.deepseek.com (HTTPS)            │
-  │  Modelo: deepseek-chat               │
-  │  Conexión OUTBOUND desde VPS         │
-  └──────────────────────────────────────┘
+    subgraph EXT["«external system» DeepSeek AI API\napi.deepseek.com (HTTPS)\nModelo: deepseek-chat — Conexión OUTBOUND desde VPS"]
+    end
+
+    Cliente -- "HTTPS" --> VPS
+    FASTAPI -- "HTTPS" --> EXT
 ```
 
 <div style="page-break-after: always;"></div>

@@ -104,30 +104,13 @@ Formar profesionales íntegros con sólidos conocimientos científicos y tecnol�
 
 ### 4. Organigrama
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│              RECTORADO — Universidad Privada de Tacna         │
-└─────────────────────────┬────────────────────────────────────┘
-                          │
-┌─────────────────────────▼────────────────────────────────────┐
-│              VICERRECTORADO ACADÉMICO                         │
-└─────────────────────────┬────────────────────────────────────┘
-                          │
-┌─────────────────────────▼────────────────────────────────────┐
-│              FACULTAD DE INGENIERÍA                           │
-└─────────────────────────┬────────────────────────────────────┘
-                          │
-┌─────────────────────────▼────────────────────────────────────┐
-│    ESCUELA PROFESIONAL DE INGENIERÍA DE SISTEMAS (EPIS)       │
-│                  Dirección de Escuela                         │
-└──────┬─────────────────────────────────────────┬─────────────┘
-       │                                         │
-┌──────▼──────────────┐             ┌────────────▼─────────────┐
-│  DOCENTES           │             │  ESTUDIANTES             │
-│  Ing. Patrick       │             │  Calloticona M.          │
-│  Cuadros Quiroga    │             │  Ramos M.                │
-│  (Supervisor)       │             │  (Equipo Desarrollador)  │
-└─────────────────────┘             └──────────────────────────┘
+```mermaid
+graph TD
+    A["RECTORADO<br/>Universidad Privada de Tacna"] --> B["VICERRECTORADO ACADÉMICO"]
+    B --> C["FACULTAD DE INGENIERÍA"]
+    C --> D["ESCUELA PROFESIONAL DE INGENIERÍA DE SISTEMAS (EPIS)<br/>Dirección de Escuela"]
+    D --> E["DOCENTES<br/>Ing. Patrick Cuadros Quiroga<br/>(Supervisor)"]
+    D --> F["ESTUDIANTES<br/>Calloticona M. | Ramos M.<br/>(Equipo Desarrollador)"]
 ```
 
 <div style="page-break-after: always;"></div>
@@ -231,50 +214,21 @@ El levantamiento de información se realizó mediante:
 
 El proceso actual de verificación de seguridad en proyectos web académicos y de PYMES de Tacna es manual, fragmentado e inconsistente:
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│           PROCESO ACTUAL DE VERIFICACIÓN DE SEGURIDAD WEB           │
-└─────────────────────────────────────────────────────────────────────┘
-
-[INICIO]
-   │
-   ▼
-[Desarrollador termina aplicación web]
-   │
-   ▼
-[Decide si hacer pruebas de seguridad]
-   │
-   ├──── NO (80% de los casos) ────────────────────────────────────────┐
-   │                                                                    │
-   ▼                                                                    │
-[SÍ: Busca herramienta manualmente en internet]                       │
-   │                                                                    │
-   ▼                                                                    │
-[Descarga e instala herramienta (OWASP ZAP, Nikto, etc.)]             │
-   │     ~30-60 minutos de instalación y configuración                 │
-   ▼                                                                    │
-[Ejecuta herramienta contra la aplicación]                            │
-   │                                                                    │
-   ▼                                                                    │
-[Recibe reporte en inglés con cientos de resultados técnicos]         │
-   │                                                                    │
-   ▼                                                                    │
-[Intenta interpretar manualmente cada resultado]                       │
-   │     ~2-8 horas para entender y priorizar resultados               │
-   ▼                                                                    │
-[Busca soluciones en Google por cada vulnerabilidad]                  │
-   │     ~1-2 días adicionales de investigación                        │
-   ▼                                                                    │
-[Implementa correcciones (algunas, no todas)]                         │
-   │                                                                    │
-   ▼                                                                    │
-[No tiene reporte formal exportable]  ◄──────────────────────────────-┘
-   │
-   ▼
-[Despliega aplicación a producción SIN auditoría de seguridad]
-   │
-   ▼
-[FIN — Aplicación potencialmente vulnerable en producción]
+```mermaid
+flowchart TD
+    A([INICIO]) --> B[Desarrollador termina aplicación web]
+    B --> C{Decide si hacer pruebas de seguridad}
+    C -- "NO — 80% de los casos" --> H[No tiene reporte formal exportable]
+    C -- SÍ --> D[Busca herramienta manualmente en internet]
+    D --> E["Descarga e instala herramienta - OWASP ZAP, Nikto, etc.<br/>~30-60 min de instalación y configuración"]
+    E --> F[Ejecuta herramienta contra la aplicación]
+    F --> G[Recibe reporte en inglés con cientos de resultados técnicos]
+    G --> I["Intenta interpretar manualmente cada resultado<br/>~2-8 horas para entender y priorizar"]
+    I --> J["Busca soluciones en Google por cada vulnerabilidad<br/>~1-2 días adicionales de investigación"]
+    J --> K["Implementa correcciones — algunas, no todas"]
+    K --> H
+    H --> L[Despliega aplicación a producción SIN auditoría de seguridad]
+    L --> M([FIN — Aplicación potencialmente vulnerable en producción])
 ```
 
 **Problemas identificados en el proceso actual:**
@@ -289,53 +243,25 @@ El proceso actual de verificación de seguridad en proyectos web académicos y d
 
 Con VulnScan Pro, el proceso de verificación de seguridad se simplifica radicalmente:
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│         PROCESO PROPUESTO CON VULNSCAN PRO                          │
-└─────────────────────────────────────────────────────────────────────┘
-
-[INICIO]
-   │
-   ▼
-[Desarrollador termina versión de la aplicación web]
-   │
-   ▼
-[Abre navegador → accede a http://149.34.48.176]
-   │     < 30 segundos
-   ▼
-[Se autentica (login) con sus credenciales JWT]
-   │     < 10 segundos
-   ▼
-[Ingresa URL objetivo + selecciona profundidad + stack tecnológico]
-   │     < 2 minutos de configuración
-   ▼
-[Inicia escaneo → sistema ejecuta 13 módulos OWASP en paralelo]
-   │     < 10 minutos (escaneo completo típico)
-   ▼
-[Dashboard muestra progreso en tiempo real (polling 3s)]
-   │
-   ▼
-[Escaneo completo → resultados con severidad codificada por color]
-   │
-   ├── ¿Vulnerabilidades críticas/altas? ─── SÍ ─────────────────────┐
-   │                                                                    │
-   │                                                                    ▼
-   │                                                          [Revisa detalle de cada vuln]
-   │                                                          [Lee análisis IA: escenario
-   │                                                           de ataque + código de remediación
-   │                                                           para su stack tecnológico]
-   │                                                          [Implementa correcciones]
-   │                                                          [Exporta reporte PDF/HTML/JSON]
-   │                                                          [Re-escanea para verificar]
-   │                                                                    │
-   ▼                                                                    │
-[Exporta reporte formal PDF en español] ◄──────────────────────────────┘
-   │
-   ▼
-[Despliega aplicación a producción CON auditoría de seguridad documentada]
-   │
-   ▼
-[FIN — Aplicación auditada, con reporte formal y vulnerabilidades remediadas]
+```mermaid
+flowchart TD
+    A([INICIO]) --> B[Desarrollador termina versión de la aplicación web]
+    B --> C["Abre navegador → accede a http://149.34.48.176<br/>< 30 segundos"]
+    C --> D["Se autentica con credenciales JWT<br/>< 10 segundos"]
+    D --> E["Ingresa URL objetivo + selecciona profundidad + stack tecnológico<br/>< 2 minutos de configuración"]
+    E --> F["Inicia escaneo → sistema ejecuta 13 módulos OWASP en paralelo<br/>< 10 minutos — escaneo completo típico"]
+    F --> G["Dashboard muestra progreso en tiempo real — polling 3s"]
+    G --> H[Escaneo completo → resultados con severidad codificada por color]
+    H --> I{¿Vulnerabilidades críticas/altas?}
+    I -- SÍ --> J[Revisa detalle de cada vulnerabilidad]
+    J --> K["Lee análisis IA: escenario de ataque + código de remediación para su stack tecnológico"]
+    K --> L[Implementa correcciones]
+    L --> M[Exporta reporte PDF/HTML/JSON]
+    M --> N[Re-escanea para verificar correcciones]
+    N --> O[Exporta reporte formal PDF en español]
+    I -- NO --> O
+    O --> P[Despliega aplicación a producción CON auditoría de seguridad documentada]
+    P --> Q([FIN — Aplicación auditada con reporte formal y vulnerabilidades remediadas])
 ```
 
 **Beneficios del proceso propuesto:**
@@ -580,45 +506,28 @@ Los requerimientos funcionales finales incorporan el análisis completo del sist
 
 #### a) Diagrama de Paquetes
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│                    VulnScan Pro — Sistema                     │
-│                                                              │
-│  ┌─────────────────┐    ┌──────────────────────────────────┐ │
-│  │   «package»     │    │         «package»                │ │
-│  │   Frontend      │    │         Backend API              │ │
-│  │   (Next.js 16)  │◄──►│         (FastAPI)                │ │
-│  │                 │    │                                  │ │
-│  │ + Dashboard     │    │ + auth_routes.py                 │ │
-│  │ + Scanner       │    │ + scan_routes.py                 │ │
-│  │ + Admin         │    │ + admin_routes.py                │ │
-│  │ + Reports       │    │ + report_routes.py               │ │
-│  │ + Profile       │    │ + solutions_routes.py            │ │
-│  └─────────────────┘    └──────────────┬─────────────────┘ │
-│                                         │                    │
-│           ┌─────────────────────────────▼──────────────────┐ │
-│           │              «package»                         │ │
-│           │         Servicios del Sistema                  │ │
-│           │                                                │ │
-│           │  ┌──────────────┐  ┌──────────────────────┐   │ │
-│           │  │ «component» │  │    «component»        │   │ │
-│           │  │  scanner.py  │  │  ai_service.py        │   │ │
-│           │  │ (13 módulos) │  │  (DeepSeek API)       │   │ │
-│           │  └──────────────┘  └──────────────────────┘   │ │
-│           │                                                │ │
-│           │  ┌──────────────┐  ┌──────────────────────┐   │ │
-│           │  │ «component» │  │    «component»        │   │ │
-│           │  │    auth.py   │  │    models.py          │   │ │
-│           │  │  (JWT+bcrypt)│  │  (SQLAlchemy ORM)     │   │ │
-│           │  └──────────────┘  └──────────────────────┘   │ │
-│           └────────────────────────────────────────────────┘ │
-│                                         │                    │
-│           ┌─────────────────────────────▼──────────────────┐ │
-│           │              «package»                         │ │
-│           │           Base de Datos                        │ │
-│           │         MySQL 8.0 — 7 tablas                   │ │
-│           └────────────────────────────────────────────────┘ │
-└──────────────────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    subgraph SYS["VulnScan Pro — Sistema"]
+        subgraph FE["«package» Frontend (Next.js 16)"]
+            F1["+ Dashboard"] & F2["+ Scanner"] & F3["+ Admin"] & F4["+ Reports"] & F5["+ Profile"]
+        end
+        subgraph BE["«package» Backend API (FastAPI)"]
+            B1["+ auth_routes.py"] & B2["+ scan_routes.py"] & B3["+ admin_routes.py"]
+            B4["+ report_routes.py"] & B5["+ solutions_routes.py"]
+        end
+        subgraph SVC["«package» Servicios del Sistema"]
+            S1["«component» scanner.py<br/>(13 módulos)"]
+            S2["«component» ai_service.py<br/>(DeepSeek API)"]
+            S3["«component» auth.py<br/>(JWT+bcrypt)"]
+            S4["«component» models.py<br/>(SQLAlchemy ORM)"]
+        end
+        subgraph DB["«package» Base de Datos<br/>MySQL 8.0 — 7 tablas"]
+        end
+    end
+    FE <--> BE
+    BE --> SVC
+    SVC --> DB
 ```
 
 #### b) Diagrama de Casos de Uso
@@ -632,45 +541,37 @@ Los requerimientos funcionales finales incorporan el análisis completo del sist
 
 **Casos de uso principales:**
 
-```
-                    ┌──────────────────────────────────────────────────┐
-                    │              Sistema VulnScan Pro                 │
-                    │                                                    │
-  ┌──────────┐     │  ┌──────────────────┐  ┌───────────────────────┐ │
-  │          │     │  │ UC-01: Registrarse│  │ UC-02: Iniciar Sesión │ │
-  │  Usuario │─────┼─►│                  │  │                       │ │
-  │          │     │  └──────────────────┘  └───────────────────────┘ │
-  └──────────┘     │                                                    │
-       │           │  ┌──────────────────┐  ┌───────────────────────┐ │
-       │           │  │ UC-03: Iniciar   │  │ UC-04: Ver Resultado  │ │
-       └───────────┼─►│ Escaneo          │  │ de Escaneo            │ │
-                   │  └──────────────────┘  └───────────────────────┘ │
-  ┌──────────┐     │                                                    │
-  │          │     │  ┌──────────────────┐  ┌───────────────────────┐ │
-  │ Analista │─────┼─►│ UC-05: Configurar│  │ UC-06: Exportar       │ │
-  │          │     │  │ Escaneo Avanzado │  │ Reporte PDF/HTML/JSON │ │
-  └──────────┘     │  └──────────────────┘  └───────────────────────┘ │
-       │           │                                                    │
-       │           │  ┌──────────────────┐  ┌───────────────────────┐ │
-       │           │  │ UC-07: Ver       │  │ UC-08: Gestionar      │ │
-       │           │  │ Historial Escan. │  │ Mi Perfil             │ │
-       │           │  └──────────────────┘  └───────────────────────┘ │
-  ┌──────────┐     │                                                    │
-  │          │     │  ┌──────────────────┐  ┌───────────────────────┐ │
-  │  Admin   │─────┼─►│ UC-09: Gestionar │  │ UC-10: Ver Audit Log  │ │
-  │          │     │  │ Usuarios         │  │                       │ │
-  └──────────┘     │  └──────────────────┘  └───────────────────────┘ │
-                   │                                                    │
-  ┌──────────┐     │  ┌──────────────────┐  ┌───────────────────────┐ │
-  │ Sistema  │─────┼─►│ UC-11: Ejecutar  │  │ UC-12: Analizar con  │ │
-  │(interno) │     │  │ Módulos OWASP    │  │ DeepSeek AI           │ │
-  └──────────┘     │  └──────────────────┘  └───────────────────────┘ │
-                   │                                                    │
-  ┌──────────┐     │  ┌──────────────────┐                            │
-  │DeepSeek  │─────┼─►│ UC-13: Generar   │                            │
-  │   AI     │     │  │ Análisis IA      │                            │
-  └──────────┘     │  └──────────────────┘                            │
-                   └──────────────────────────────────────────────────┘
+```mermaid
+graph LR
+    Usuario --> UC01["UC-01: Registrarse"]
+    Usuario --> UC02["UC-02: Iniciar Sesión"]
+    Usuario --> UC03["UC-03: Iniciar Escaneo"]
+    Usuario --> UC04["UC-04: Ver Resultado de Escaneo"]
+    Analista --> UC05["UC-05: Configurar Escaneo Avanzado"]
+    Analista --> UC06["UC-06: Exportar Reporte PDF/HTML/JSON"]
+    Analista --> UC07["UC-07: Ver Historial Escan."]
+    Analista --> UC08["UC-08: Gestionar Mi Perfil"]
+    Admin --> UC09["UC-09: Gestionar Usuarios"]
+    Admin --> UC10["UC-10: Ver Audit Log"]
+    Sistema["Sistema (interno)"] --> UC11["UC-11: Ejecutar Módulos OWASP"]
+    Sistema --> UC12["UC-12: Analizar con DeepSeek AI"]
+    DeepSeekAI["DeepSeek AI"] --> UC13["UC-13: Generar Análisis IA"]
+
+    subgraph SistemaVulnScan["Sistema VulnScan Pro"]
+        UC01
+        UC02
+        UC03
+        UC04
+        UC05
+        UC06
+        UC07
+        UC08
+        UC09
+        UC10
+        UC11
+        UC12
+        UC13
+    end
 ```
 
 #### c) Escenarios de Caso de Uso (Narrativa)
@@ -779,150 +680,163 @@ Los objetos principales del sistema y sus relaciones:
 
 **Actividad: Proceso completo de escaneo**
 
-```
-[Usuario] ──► Ingresa URL y configuración
-                    │
-                    ▼
-[Sistema] ──► Valida URL (formato, no privada)
-                    │
-                    ▼
-[Scan:pending] ──► Se crea en BD con estado "pending"
-                    │
-                    ▼
-[BackgroundTask] ──► Actualiza Scan.status = "in_progress"
-                    │
-                    ▼
-         ┌──────────┴──────────────────────────┐
-         │                                      │
-         ▼                                      ▼
-[Módulo Headers] ──────────► [Módulo SQLi] ────► ...  (13 módulos en paralelo controlado)
-         │                        │
-         ▼                        ▼
-[Vulnerability:HIGH] ──► Se crea en BD para cada hallazgo
-         │
-         ▼
-[DeepSeek AI] ──► Analiza vulnerabilidad → CVSS, CWE, escenario, código remediación
-         │
-         ▼
-[Vulnerability] ──► Se actualiza con análisis IA
-         │
-         ▼
-[Scan:completed] ──► risk_score calculado, completed_at registrado
-         │
-         ▼
-[AuditLog] ──► Registra "scan_completed" con scan_id y risk_score
+```mermaid
+flowchart TD
+    A["[Usuario] Ingresa URL y configuración"] --> B["[Sistema] Valida URL — formato, no privada"]
+    B --> C["[Scan:pending] Se crea en BD con estado 'pending'"]
+    C --> D["[BackgroundTask] Actualiza Scan.status = 'in_progress'"]
+    D --> E1["[Módulo Headers]"] & E2["[Módulo SQLi]"] & E3["[...13 módulos en paralelo controlado]"]
+    E1 & E2 & E3 --> F["[Vulnerability:HIGH] Se crea en BD para cada hallazgo"]
+    F --> G["[DeepSeek AI] Analiza vulnerabilidad → CVSS, CWE, escenario, código remediación"]
+    G --> H["[Vulnerability] Se actualiza con análisis IA"]
+    H --> I["[Scan:completed] risk_score calculado, completed_at registrado"]
+    I --> J["[AuditLog] Registra 'scan_completed' con scan_id y risk_score"]
 ```
 
 #### c) Diagrama de Secuencia
 
 **Secuencia: UC-03 — Iniciar Escaneo**
 
-```
-Usuario     Frontend(Next.js)    API(FastAPI)    Scanner    DeepSeek    MySQL
-   │               │                 │               │           │         │
-   │──POST /scans──►               │               │           │         │
-   │    {url, depth, stack, ai}    │               │           │         │
-   │               │──────────────►│               │           │         │
-   │               │               │──validate()───►           │         │
-   │               │               │◄──valid───────            │         │
-   │               │               │                           │         │
-   │               │               │──INSERT Scan(pending)─────────────►│
-   │               │               │◄──scan_id──────────────────────────│
-   │               │               │                           │         │
-   │               │               │──BackgroundTask(scan_id)──►         │
-   │               │◄──202 {scan_id}│               │           │         │
-   │◄──redirect /scans/{id}        │               │           │         │
-   │               │               │               │           │         │
-   │   [polling cada 3s]           │               │           │         │
-   │──GET /scans/{id}──────────────►               │           │         │
-   │               │               │               │──run_modules()      │
-   │               │               │               │──UPDATE Scan(running)►│
-   │               │               │               │──for each vuln:      │
-   │               │               │               │──INSERT Vuln(...)───►│
-   │               │               │               │──ai_analyze(vuln)──►│
-   │               │               │               │◄──{cvss,cwe,code}──  │
-   │               │               │               │──UPDATE Vuln(ai)────►│
-   │               │               │               │──UPDATE Scan(done)──►│
-   │               │◄──{status:done}│               │           │         │
-   │◄──muestra resultados          │               │           │         │
+```mermaid
+sequenceDiagram
+    actor Usuario
+    participant FE as Frontend (Next.js)
+    participant API as API (FastAPI)
+    participant Scanner
+    participant DeepSeek as DeepSeek AI
+    participant MySQL
+
+    Usuario->>FE: Ingresa URL y configuración
+    FE->>API: POST /scans {url, depth, stack, ai}
+    API->>API: validate()
+    API->>MySQL: INSERT Scan(pending)
+    MySQL-->>API: scan_id
+    API->>Scanner: BackgroundTask(scan_id)
+    API-->>FE: 202 {scan_id}
+    FE-->>Usuario: redirect /scans/{id}
+
+    loop Polling cada 3s
+        Usuario->>API: GET /scans/{id}
+        Scanner->>Scanner: run_modules()
+        Scanner->>MySQL: UPDATE Scan(running)
+        loop Para cada vulnerabilidad encontrada
+            Scanner->>MySQL: INSERT Vuln(...)
+            Scanner->>DeepSeek: ai_analyze(vuln)
+            DeepSeek-->>Scanner: {cvss, cwe, code}
+            Scanner->>MySQL: UPDATE Vuln(ai)
+        end
+        Scanner->>MySQL: UPDATE Scan(done)
+        API-->>FE: {status: done}
+        FE-->>Usuario: muestra resultados
+    end
 ```
 
 #### d) Diagrama de Clases
 
-```
-┌─────────────────────────────────┐
-│              User                │
-├─────────────────────────────────┤
-│ - id: int                        │
-│ - name: str                      │
-│ - email: str                     │
-│ - hashed_password: str           │
-│ - role: enum(admin,analyst,user) │
-│ - is_active: bool                │
-│ - is_locked: bool                │
-│ - failed_login_attempts: int     │
-│ - locked_until: datetime|null    │
-│ - created_at: datetime           │
-├─────────────────────────────────┤
-│ + verify_password(pwd): bool     │
-│ + generate_jwt(): str            │
-│ + lock_account(): void           │
-│ + unlock_account(): void         │
-└──────────────┬──────────────────┘
-               │ 1..*
-               │
-┌──────────────▼──────────────────┐    ┌─────────────────────────────────┐
-│            Scan                  │    │          Vulnerability           │
-├─────────────────────────────────┤    ├─────────────────────────────────┤
-│ - id: int                        │    │ - id: int                        │
-│ - user_id: int (FK)              │    │ - scan_id: int (FK)              │
-│ - target_url: str                │    │ - module_name: str               │
-│ - status: enum                   │    │ - vuln_type: str                 │
-│ - depth: enum(basic/std/full)    │◄───┤ - severity: enum                 │
-│ - tech_stack: str                │1.*│ - url: str                       │
-│ - use_ai: bool                   │    │ - parameter: str                 │
-│ - risk_score: int (0-100)        │    │ - evidence: str                  │
-│ - started_at: datetime           │    │ - description: str               │
-│ - completed_at: datetime|null    │    │ - solution: str                  │
-│ - current_module: str            │    │ - cvss_score: float|null         │
-├─────────────────────────────────┤    │ - cwe_id: str|null               │
-│ + calculate_risk_score(): int    │    │ - ai_analysis: JSON|null         │
-│ + mark_completed(): void         │    ├─────────────────────────────────┤
-└─────────────────────────────────┘    │ + get_severity_label(): str      │
-                                        └─────────────────────────────────┘
+```mermaid
+classDiagram
+    class User {
+        -int id
+        -str name
+        -str email
+        -str hashed_password
+        -enum role
+        -bool is_active
+        -bool is_locked
+        -int failed_login_attempts
+        -datetime locked_until
+        -datetime created_at
+        +verify_password(pwd) bool
+        +generate_jwt() str
+        +lock_account() void
+        +unlock_account() void
+    }
+    class Scan {
+        -int id
+        -int user_id
+        -str target_url
+        -enum status
+        -enum depth
+        -str tech_stack
+        -bool use_ai
+        -int risk_score
+        -datetime started_at
+        -datetime completed_at
+        -str current_module
+        +calculate_risk_score() int
+        +mark_completed() void
+    }
+    class Vulnerability {
+        -int id
+        -int scan_id
+        -str module_name
+        -str vuln_type
+        -enum severity
+        -str url
+        -str parameter
+        -str evidence
+        -str description
+        -str solution
+        -float cvss_score
+        -str cwe_id
+        -JSON ai_analysis
+        +get_severity_label() str
+    }
+    class AuditLog {
+        -int id
+        -int user_id
+        -str action
+        -str ip_address
+        -str user_agent
+        -str endpoint
+        -str method
+        -int status_code
+        -JSON details
+        -datetime created_at
+        %% READ ONLY — no update/delete
+    }
+    class Report {
+        -int id
+        -int scan_id
+        -int user_id
+        -enum report_type
+        -str file_path
+        -int file_size
+        -datetime created_at
+        +generate_pdf() bytes
+        +generate_html() str
+        +generate_json() dict
+    }
+    class UserSession {
+        -int id
+        -int user_id
+        -str jti
+        -str ip_address
+        -str user_agent
+        -bool is_active
+        -datetime created_at
+        -datetime expires_at
+        +revoke() void
+        +revoke_all_user() void
+    }
+    class PasswordReset {
+        -int id
+        -int user_id
+        -str token
+        -datetime expires_at
+        -bool is_used
+        -datetime created_at
+        +is_valid() bool
+        +mark_used() void
+    }
 
-┌─────────────────────────────────┐    ┌─────────────────────────────────┐
-│          AuditLog                │    │             Report               │
-├─────────────────────────────────┤    ├─────────────────────────────────┤
-│ - id: int                        │    │ - id: int                        │
-│ - user_id: int|null (FK)         │    │ - scan_id: int (FK)              │
-│ - action: str                    │    │ - user_id: int (FK)              │
-│ - ip_address: str                │    │ - report_type: enum(pdf/html/json│
-│ - user_agent: str                │    │ - file_path: str                 │
-│ - endpoint: str                  │    │ - file_size: int                 │
-│ - method: str                    │    │ - created_at: datetime           │
-│ - status_code: int               │    ├─────────────────────────────────┤
-│ - details: JSON                  │    │ + generate_pdf(): bytes          │
-│ - created_at: datetime           │    │ + generate_html(): str           │
-├─────────────────────────────────┤    │ + generate_json(): dict          │
-│ [READ ONLY — no update/delete]  │    └─────────────────────────────────┘
-└─────────────────────────────────┘
-
-┌─────────────────────────────────┐    ┌─────────────────────────────────┐
-│          UserSession             │    │         PasswordReset            │
-├─────────────────────────────────┤    ├─────────────────────────────────┤
-│ - id: int                        │    │ - id: int                        │
-│ - user_id: int (FK)              │    │ - user_id: int (FK)              │
-│ - jti: str (unique)              │    │ - token: str (unique)            │
-│ - ip_address: str                │    │ - expires_at: datetime           │
-│ - user_agent: str                │    │ - is_used: bool                  │
-│ - is_active: bool                │    │ - created_at: datetime           │
-│ - created_at: datetime           │    ├─────────────────────────────────┤
-│ - expires_at: datetime           │    │ + is_valid(): bool               │
-├─────────────────────────────────┤    │ + mark_used(): void              │
-│ + revoke(): void                 │    └─────────────────────────────────┘
-│ + revoke_all_user(): void        │
-└─────────────────────────────────┘
+    User "1" --> "0..*" Scan : runs
+    User "1" --> "0..*" UserSession : has
+    User "1" --> "0..*" Report : exports
+    User "1" --> "0..*" AuditLog : generates
+    User "1" --> "0..*" PasswordReset : requests
+    Scan "1" --> "0..*" Vulnerability : contains
+    Scan "1" --> "0..*" Report : produces
 ```
 
 <div style="page-break-after: always;"></div>
