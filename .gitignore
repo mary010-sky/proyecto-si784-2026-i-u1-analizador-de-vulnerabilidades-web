@@ -9,6 +9,13 @@ __pycache__/
 *.pyc
 *.pyo
 
+# Pruebas / cobertura
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.mutmut-cache
+
 # Variables de entorno (NUNCA subir credenciales)
 .env
 *.env

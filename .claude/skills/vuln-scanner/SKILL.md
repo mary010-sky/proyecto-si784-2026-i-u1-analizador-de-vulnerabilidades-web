@@ -1,6 +1,6 @@
 ---
 name: vuln-scanner
-description: Escanea una URL en busca de vulnerabilidades web (XSS, SQLi, CSRF, cabeceras faltantes, open redirect, exposicion de informacion) usando el backend Web Vulnerability Scanner. Usar cuando el usuario pida escanear, auditar o analizar la seguridad de un sitio/URL, o pregunte por vulnerabilidades de una pagina web.
+description: Escanea una URL en busca de vulnerabilidades web (XSS, SQLi, CSRF, cabeceras faltantes, open redirect, exposicion de informacion, LFI/path traversal, SSRF, command injection, metodos HTTP peligrosos) usando el backend Web Vulnerability Scanner. Usar cuando el usuario pida escanear, auditar o analizar la seguridad de un sitio/URL, o pregunte por vulnerabilidades de una pagina web.
 ---
 
 # Vuln Scanner
@@ -42,7 +42,7 @@ python .claude/skills/vuln-scanner/scripts/scan.py <target_url> [--depth N] [--m
 - `target_url` (obligatorio): URL completa a escanear, ej. `https://ejemplo.com`.
 - `--depth`: profundidad de rastreo, 0-3 (default 1).
 - `--modules`: lista separada por comas de modulos a ejecutar. Por defecto:
-  `xss,sqli,headers,csrf,open_redirect,info_disclosure`.
+  `xss,sqli,headers,csrf,open_redirect,info_disclosure,lfi,command_injection,ssrf,http_methods`.
 - `--timeout`: timeout por request del scanner en segundos, 3-30 (default 10).
 
 El script crea el escaneo, hace polling hasta que termina (`completed` o `failed`) y

@@ -4,52 +4,42 @@ Feature: Deteccion de vulnerabilidades web
   Para generar reportes de riesgo y guias de remediacion
 
   Scenario: Detectar cabeceras de seguridad faltantes
-    Given un sitio sin cabeceras de seguridad configuradas
-    When analizo las cabeceras del sitio
+    Given una pagina sin cabeceras de seguridad configuradas
+    When analizo las cabeceras de la pagina
     Then debo encontrar al menos una vulnerabilidad de cabecera faltante
 
   Scenario: No reportar falsos positivos cuando las cabeceras estan presentes
-    Given un sitio con todas las cabeceras de seguridad configuradas
-    When analizo las cabeceras del sitio
+    Given una pagina con todas las cabeceras de seguridad configuradas
+    When analizo las cabeceras de la pagina
     Then no debo encontrar vulnerabilidades de cabecera faltante
 
-  Scenario: Detectar CORS wildcard permisivo
-    Given un sitio con CORS configurado como wildcard
-    When analizo las cabeceras del sitio
-    Then debo encontrar una vulnerabilidad de tipo CORS Misconfiguration
+  Scenario: Detectar formulario POST sin token CSRF
+    Given una pagina con un formulario POST sin token CSRF
+    When analizo el CSRF de la pagina
+    Then debo encontrar una vulnerabilidad de tipo csrf
 
-  Scenario: Retornar lista vacia cuando el sitio no responde
-    Given un sitio que no responde
-    When analizo las cabeceras del sitio
-    Then debo obtener una lista de hallazgos vacia
+  Scenario: No reportar CSRF cuando el formulario tiene token
+    Given una pagina con un formulario POST con token CSRF
+    When analizo el CSRF de la pagina
+    Then no debo encontrar vulnerabilidades de csrf
 
-  Scenario: Detectar WordPress en el cuerpo de la respuesta
-    Given un sitio que usa WordPress
-    When detecto las tecnologias del sitio
-    Then WordPress debe estar en la lista de CMS detectados
+  Scenario: Detectar Local File Inclusion mediante path traversal
+    Given un parametro vulnerable a path traversal
+    When pruebo LFI sobre el parametro
+    Then debo encontrar una vulnerabilidad de tipo lfi
 
-  Scenario: Retornar estructura vacia cuando el sitio no responde al detectar tecnologias
-    Given un sitio que no responde
-    When detecto las tecnologias del sitio
-    Then la lista de CMS detectados debe estar vacia
+  Scenario: Detectar archivo .env expuesto
+    Given un sitio con el archivo .env accesible publicamente
+    When busco archivos sensibles expuestos
+    Then debo encontrar una vulnerabilidad de archivo .env expuesto
 
-  Scenario: Construir hallazgo con campos correctos
+  Scenario: Construir un hallazgo con los campos correctos
     Given un hallazgo de tipo sqli con severidad high
     When verifico la estructura del hallazgo
-    Then el tipo de vulnerabilidad debe ser sqli
+    Then el modulo del hallazgo debe ser sqli
     And la severidad debe ser high
 
-  Scenario: Truncar evidencia larga a 500 caracteres
-    Given un hallazgo con evidencia de 600 caracteres
-    When verifico la estructura del hallazgo
-    Then la evidencia debe tener exactamente 500 caracteres
-
-  Scenario: Inyectar payload en parametros de URL existentes
+  Scenario: Reemplazar un parametro existente en la URL
     Given una URL con parametros de consulta
-    When inyecto un payload en los parametros
-    Then el payload debe aparecer en la URL resultante
-
-  Scenario: Agregar parametros cuando la URL no tiene ninguno
-    Given una URL sin parametros de consulta
-    When inyecto un payload en los parametros
-    Then la URL resultante debe contener parametros con el payload
+    When reemplazo el valor de un parametro
+    Then el nuevo valor debe aparecer en la URL resultante

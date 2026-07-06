@@ -9,7 +9,10 @@ import urllib.request
 from pathlib import Path
 
 DEFAULT_API_URL = "https://vulnerabilidad-web.sytes.net/backend"
-DEFAULT_MODULES = ["xss", "sqli", "headers", "csrf", "open_redirect", "info_disclosure"]
+DEFAULT_MODULES = [
+    "xss", "sqli", "headers", "csrf", "open_redirect", "info_disclosure",
+    "lfi", "command_injection", "ssrf", "http_methods",
+]
 POLL_INTERVAL_SECONDS = 3
 SEVERITY_ORDER = {"critical": 4, "high": 3, "medium": 2, "low": 1, "info": 0}
 
