@@ -1,3 +1,7 @@
+# Carpeta duplicada previa a la reorganizacion del proyecto (contenido real ahora vive
+# en backend/, frontend/, etc. en la raiz)
+/web-vulnerabilidad/
+
 # Python
 backend/venv/
 backend/venv_win/
