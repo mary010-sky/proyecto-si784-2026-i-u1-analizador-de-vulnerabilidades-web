@@ -28,7 +28,6 @@ def safe_get(url: str, timeout: int = TIMEOUT, allow_redirects: bool = True, **k
             timeout=timeout,
             headers=HEADERS_UA,
             allow_redirects=allow_redirects,
-            verify=False,
             **kwargs
         )
     except RequestException:
@@ -607,7 +606,7 @@ def check_sensitive_files(url: str, timeout: int = TIMEOUT) -> list:
 def check_http_methods(url: str, timeout: int = TIMEOUT) -> list:
     findings = []
     try:
-        resp = requests.options(url, timeout=timeout, headers=HEADERS_UA, verify=False)
+        resp = requests.options(url, timeout=timeout, headers=HEADERS_UA)
         allow = resp.headers.get("Allow", "") + resp.headers.get("Access-Control-Allow-Methods", "")
         dangerous = [m for m in ["PUT", "DELETE", "TRACE", "CONNECT", "PATCH"] if m in allow]
         if dangerous:

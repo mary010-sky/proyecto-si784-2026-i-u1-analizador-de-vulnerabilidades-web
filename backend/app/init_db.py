@@ -1,17 +1,30 @@
+import re
+
 from sqlalchemy import create_engine, inspect, text
 
 from .config import settings
 from .database import Base, engine
 from . import models  # noqa: F401
 
+# SQLAlchemy no permite parametrizar identificadores (nombres de base de datos) en DDL;
+# en su lugar se valida contra una lista blanca estricta antes de interpolar el nombre.
+VALID_DB_NAME = re.compile(r"^[A-Za-z0-9_]+$")
+
 
 def ensure_database() -> None:
+    if not VALID_DB_NAME.match(settings.db_name):
+        raise ValueError(
+            "db_name invalido: solo se permiten letras, numeros y guion bajo."
+        )
+
     server_engine = create_engine(settings.database_server_url, pool_pre_ping=True, future=True)
-    safe_name = settings.db_name.replace("`", "``")
     with server_engine.connect() as connection:
+        # nosemgrep: avoid-sqlalchemy-text -- settings.db_name ya fue validado arriba
+        # contra VALID_DB_NAME (solo [A-Za-z0-9_]); no es un CREATE DATABASE con datos
+        # de usuario, y los identificadores no se pueden bindear como parametros en DDL.
         connection.execute(
             text(
-                f"CREATE DATABASE IF NOT EXISTS `{safe_name}` "
+                f"CREATE DATABASE IF NOT EXISTS `{settings.db_name}` "
                 "CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
             )
         )
