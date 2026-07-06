@@ -770,34 +770,51 @@ La vista de despliegue muestra la distribución física del sistema sobre los no
 #### 3.5.1 Diagrama de Despliegue
 
 ```mermaid
-graph TD
-    subgraph Cliente["«device» Cliente — Navegador Web\nChrome 120+ / Firefox 120+ — Windows / macOS / Linux"]
-        BUNDLE["«artifact» Next.js Bundle\nJavaScript/CSS — Cargado desde VPS"]
-    end
+graph LR
+    classDef panel fill:#fffacd,stroke:#ffa500,stroke-width:2px,color:#000
+    classDef component fill:#e6f3ff,stroke:#4169e1,stroke-width:2px,color:#000
+    classDef entry fill:#e6f3ff,stroke:#4169e1,stroke-width:2px,color:#000
 
-    subgraph VPS["«device» VPS Linux — Ubuntu 22.04 LTS\nIP: 149.34.48.176 — 2 vCPU / 4 GB RAM / 50 GB SSD"]
-        subgraph NGINX["«execution environment» Nginx 1.24\nPuerto 80 → 443 / Puerto 443 (TLS 1.2/1.3)\nRate limit: 10 req/s general, 5 req/min login\nHeaders: CSP, HSTS, X-Frame"]
-        end
-        subgraph NEXTAPP["«executable» Next.js 16 App\nPM2 Process Mgr — Puerto 3000 — Node.js 20"]
-            FEC["Frontend Components\nDashboard | Scanner UI"]
-        end
-        subgraph FASTAPI["«exec env» FastAPI / Gunicorn 4 workers — Puerto 8000"]
-            SCANNER_COMP["scanner | auth | reports | ai_svc"]
-        end
-        subgraph MYSQL["«database» MySQL 8.0\nPuerto 3306 (localhost ONLY)\nBase: vulnscan_db — 7 tablas — QueuePool 10+20"]
-        end
-        subgraph UFW["«firewall» UFW (iptables)\nALLOW: 22/tcp SSH, 80/tcp, 443/tcp\nDENY: 3306, 8000, 3000"]
-        end
-        NGINX --> NEXTAPP
-        NGINX --> FASTAPI
-        FASTAPI --> MYSQL
-    end
+    NGINX["<b>Sistema de Acceso</b><br/>Nginx 1.24 — Proxy Reverso<br/>Initializes Frontend App<br/>Initializes Backend API<br/>SSL/TLS — Puerto 80/443<br/>Rate limiting 10 req/s"]:::entry
 
-    subgraph EXT["«external system» DeepSeek AI API\napi.deepseek.com (HTTPS)\nModelo: deepseek-chat — Conexión OUTBOUND desde VPS"]
-    end
+    FE["<b>Frontend App</b><br/>Next.js 16 — PM2:3000<br/>Initializes Dashboard SOC<br/>Initializes Scanner UI<br/>Initializes Admin Panel<br/>Initializes Profile<br/>Log out"]:::panel
 
-    Cliente -- "HTTPS" --> VPS
-    FASTAPI -- "HTTPS" --> EXT
+    BE["<b>Backend API</b><br/>FastAPI — Gunicorn 4w:8000<br/>Initializes Autenticación JWT<br/>Initializes Motor OWASP<br/>Initializes Análisis IA<br/>Initializes Generación Reportes<br/>Initializes Administración<br/>Log out"]:::panel
+
+    NGINX --> FE
+    NGINX --> BE
+
+    DASH["<b>dashboardSOC</b><br/>getStats() JSON<br/>getRecentScans() list<br/>getVulnChart() JSON"]:::component
+    SCANNER_UI["<b>scannerUI</b><br/>startScan() void<br/>pollStatus() JSON<br/>showResults() void"]:::component
+    ADMIN_FE["<b>adminPanel</b><br/>manageUsers() void<br/>viewAuditLog() list"]:::component
+    LOGOUT_FE["<b>Logout</b><br/>Initializes Sistema de Acceso"]:::component
+
+    FE --> DASH
+    FE --> SCANNER_UI
+    FE --> ADMIN_FE
+    FE -.-> LOGOUT_FE
+
+    AUTH_SVC["<b>authService</b><br/>register() void<br/>login() token<br/>verifyJWT() user<br/>logout() void"]:::component
+    SCAN_SVC["<b>scannerService</b><br/>runFullScan() void<br/>run13Modules() list<br/>calcRiskScore() int"]:::component
+    AI_SVC["<b>aiService</b><br/>analyzeVuln() JSON<br/>generateExecReport() JSON<br/>fallbackLocal() JSON"]:::component
+    REPORT_SVC["<b>reportService</b><br/>generatePDF() bytes<br/>generateHTML() str<br/>generateJSON() dict"]:::component
+    ADMIN_SVC["<b>adminService</b><br/>manageUsers() void<br/>viewAuditLog() list<br/>getGlobalStats() JSON"]:::component
+    LOGOUT_BE["<b>Logout</b><br/>Initializes Sistema de Acceso"]:::component
+    MYSQL["<b>MySQL 8.0</b><br/>Puerto 3306 localhost ONLY<br/>Base: vulnscan_db<br/>7 tablas — QueuePool 10+20"]:::component
+    DEEPSEEK["<b>DeepSeek AI API</b><br/>api.deepseek.com HTTPS<br/>Modelo: deepseek-chat<br/>OUTBOUND desde VPS"]:::component
+
+    BE --> AUTH_SVC
+    BE --> SCAN_SVC
+    BE --> AI_SVC
+    BE --> REPORT_SVC
+    BE --> ADMIN_SVC
+    BE -.-> LOGOUT_BE
+
+    AUTH_SVC --> MYSQL
+    SCAN_SVC --> MYSQL
+    REPORT_SVC --> MYSQL
+    ADMIN_SVC --> MYSQL
+    AI_SVC --> DEEPSEEK
 ```
 
 <div style="page-break-after: always;"></div>
