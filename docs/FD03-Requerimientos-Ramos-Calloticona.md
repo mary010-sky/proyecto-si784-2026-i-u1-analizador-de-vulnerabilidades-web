@@ -777,14 +777,12 @@ sequenceDiagram
     API-->>FE: {scan, vulnerabilities, risk_score}
     FE-->>Usuario: Lista de vulnerabilidades ordenadas por severidad con badges de color
 
-    alt Usuario selecciona una vulnerabilidad
-        Usuario->>FE: Clic en vulnerabilidad
-        FE-->>Usuario: Detalle: módulo, severidad, URL afectada, parámetro, evidencia, PoC
-        opt use_ai = True y ai_analysis disponible
-            FE-->>Usuario: Pestaña IA: CVSS score/vector, CWE, escenario de ataque, código de remediación
-        else ai_analysis no disponible
-            FE-->>Usuario: Análisis Local (fallback) marcado como Análisis Local
-        end
+    alt Usuario selecciona una vulnerabilidad con análisis IA
+        Usuario->>FE: Clic en vulnerabilidad (use_ai=True, ai_analysis disponible)
+        FE-->>Usuario: Detalle + Pestaña IA: CVSS score/vector, CWE, escenario de ataque, código de remediación
+    else Usuario selecciona vulnerabilidad sin análisis IA
+        Usuario->>FE: Clic en vulnerabilidad (use_ai=False o ai_analysis no disponible)
+        FE-->>Usuario: Detalle: módulo, severidad, URL, parámetro, evidencia, PoC — Análisis Local (fallback)
     end
 
     alt Usuario filtra por severidad/módulo/estado

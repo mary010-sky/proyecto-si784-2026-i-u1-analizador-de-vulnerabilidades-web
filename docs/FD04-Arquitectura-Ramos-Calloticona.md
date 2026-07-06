@@ -388,8 +388,6 @@ graph TD
     BG --> SCANNER["scanner.py\nrun_full_scan()"]
     BG --> AISVC["ai_service.py\nDeepSeek"]
     SCANNER -- "analyzeVuln" --> AISVC
-       │
-       └──── GET cada 3s ──── status: in_progress → completed
 ```
 
 #### 3.2.4 Diagrama de Objetos
