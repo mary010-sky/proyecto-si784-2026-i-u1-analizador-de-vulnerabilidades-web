@@ -1,74 +1,50 @@
-# Guía Paso a Paso: Agente para GitHub Copilot
+# Guía: Agente Personalizado de GitHub Copilot
 
-El agente ya está desplegado y activo 24/7 en:
+**Actualización importante:** GitHub cambió por completo cómo se crean agentes
+personalizados de Copilot. El modelo anterior (una GitHub App con tipo "Agent" +
+un servidor HTTP propio) quedó obsoleto. El modelo actual (2026) es mucho más simple:
+**un solo archivo Markdown dentro del repositorio**, sin servidor, sin GitHub App,
+sin nada que desplegar.
 
-**`https://vulnerabilidad-web.sytes.net/copilot-agent/`**
+## Dónde vive el agente
 
-Corre como servicio systemd (`wvs-copilot-agent.service`, `Restart=always`) en el mismo
-VPS que el backend. No necesitas ngrok, no necesitas tener nada corriendo en tu PC —
-solo registrar la GitHub App apuntando a esa URL.
-
-## 1. Requisitos previos
-- Una cuenta de **GitHub** con acceso a Copilot.
-- Nada más. El agente ya cumple el protocolo real de Copilot Extensions: responde en
-  streaming (Server-Sent Events) y verifica la firma de las peticiones de GitHub.
-
-## 2. Configurar la GitHub App (Copilot Extension)
-
-1. Ve a **GitHub > Settings > Developer settings > GitHub Apps**.
-2. Haz clic en **"New GitHub App"**.
-3. Rellena los datos:
-   - **GitHub App name:** `WVS Scanner Agent` (o el nombre que prefieras, debe ser único
-     en todo GitHub)
-   - **Homepage URL:** `https://vulnerabilidad-web.sytes.net`
-   - **Webhook:** desmarca "Active" (no lo necesitas)
-4. En **Permissions**, no necesitas permisos adicionales para esta version simple del
-   agente.
-5. Baja a la sección **"Copilot"**:
-   - En **App Type**, selecciona **Agent**.
-   - En **URL**, pega: `https://vulnerabilidad-web.sytes.net/copilot-agent/`
-6. En **Where can this GitHub App be installed?**, elige **Only on this account**
-   (la dejamos privada/no listada, sin pasar por revisión de GitHub).
-7. Dale a **Create GitHub App**.
-8. En el menú izquierdo de la App recién creada, ve a **Install App** y haz clic en
-   Install para tu cuenta.
-
-## 3. Probar en Visual Studio Code
-
-1. Abre VS Code con sesión iniciada en la cuenta de GitHub donde instalaste la App.
-2. Abre el panel de **Copilot Chat**.
-3. Escribe `@`. Debería aparecer el nombre de tu agente en las sugerencias
-   (ej. `@wvs-scanner-agent`).
-4. Pruébalo:
-   ```text
-   @wvs-scanner-agent analiza la seguridad de https://ejemplo.com
-   ```
-5. El mensaje llega firmado a `https://vulnerabilidad-web.sytes.net/copilot-agent/`,
-   el agente verifica que sea realmente GitHub quien pregunta, lanza el escaneo contra
-   el backend y transmite el resultado en Markdown de vuelta al chat.
-
-## Administración (en el VPS)
-
-```bash
-ssh root@149.34.48.176
-systemctl status wvs-copilot-agent.service
-journalctl -u wvs-copilot-agent.service -f
-systemctl restart wvs-copilot-agent.service
+```
+.github/agents/vuln-scanner.agent.md
 ```
 
-## Nota sobre la verificacion de firma
+Ya está creado en este repo. Contiene:
+- Frontmatter YAML con `name` y `description` (esto es lo que usa Copilot para saber
+  cuándo ofrecer el agente).
+- Instrucciones en Markdown debajo, que le dicen a Copilot que ejecute
+  `.claude/skills/vuln-scanner/scripts/scan.py` (el mismo script que ya usa la Skill
+  de Claude Code — no se duplicó nada).
 
-Si durante las pruebas ves errores 401 "Firma invalida" y quieres descartar que el
-problema sea la verificacion (en vez de la GitHub App mal configurada), puedes
-desactivarla temporalmente editando el servicio:
+## Requisitos
 
-```bash
-# en /etc/systemd/system/wvs-copilot-agent.service, agregar:
-Environment="WVS_COPILOT_VERIFY_SIGNATURE=false"
-# luego:
-systemctl daemon-reload && systemctl restart wvs-copilot-agent.service
-```
+- El archivo debe estar comiteado en la rama por defecto (`main`) del repo para que
+  Copilot lo detecte.
+- Cada usuario necesita su propia `WVS_API_KEY` como variable de entorno (no viene
+  incluida en el agente).
 
-Vuelve a activarla (quitando esa linea) una vez que confirmes que el resto del flujo
-funciona — sin verificacion de firma, cualquiera que conozca la URL podria enviarle
-peticiones al agente haciendose pasar por GitHub.
+## Cómo se usa
+
+Una vez que el archivo está en `main`:
+
+- **github.com**: en el panel/pestaña de agentes de Copilot, hay un selector para
+  elegir este agente personalizado en vez del agente por defecto.
+- **VS Code / JetBrains / Eclipse / Xcode**: aparece como opción dentro de Copilot
+  Chat (función en preview publica).
+- **GitHub Copilot CLI**: con el comando `/agent`.
+- **Asignar a un issue**: al asignarle Copilot a un issue, se puede elegir este agente
+  en el desplegable.
+
+No hace falta instalar nada ni crear ninguna GitHub App — Copilot lo detecta solo por
+estar en `.github/agents/`.
+
+## Sobre el servidor Express antiguo (`integraciones/copilot-extension/`)
+
+Ese código (con verificación de firma y streaming SSE) implementaba el protocolo viejo
+de "Copilot Extensions" vía GitHub App. Se deja en el repo como referencia histórica,
+pero **ya no es necesario ni es el camino recomendado** — el archivo
+`.github/agents/vuln-scanner.agent.md` lo reemplaza por completo con muchísimo menos
+esfuerzo.
