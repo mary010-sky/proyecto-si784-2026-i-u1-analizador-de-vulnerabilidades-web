@@ -23,12 +23,13 @@ HEADERS_UA = {
 
 def safe_get(url: str, timeout: int = TIMEOUT, allow_redirects: bool = True, **kwargs):
     try:
+        # nosemgrep: disabled-cert-validation -- escanea sitios objetivo arbitrarios (certificados propios/autofirmados/interceptados), no una API propia de confianza
         return requests.get(
             url,
             timeout=timeout,
             headers=HEADERS_UA,
             allow_redirects=allow_redirects,
-            verify=False,  # nosemgrep: disabled-cert-validation -- escanea sitios objetivo arbitrarios (certificados propios/autofirmados/interceptados), no una API propia de confianza
+            verify=False,
             **kwargs
         )
     except RequestException:
