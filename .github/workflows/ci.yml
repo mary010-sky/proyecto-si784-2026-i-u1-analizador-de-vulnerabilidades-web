@@ -406,22 +406,25 @@ jobs:
               return (r.stdout + r.stderr).strip()
 
           # ── Obtener resumen ──────────────────────────────────────────────
+          # "mutmut results" NUNCA imprime una seccion "Killed": los mutantes
+          # matados simplemente no se listan (no requieren accion). Por eso el
+          # total real de mutantes se obtiene de "mutmut junitxml" (atributo
+          # tests= del <testsuites>), y "killed" se calcula por diferencia en
+          # vez de buscar un texto que no existe (eso causaba 0% siempre).
           results_raw = run("mutmut results")
+          junitxml_raw = run("mutmut junitxml")
 
-          killed = survived = timeout = suspicious = 0
+          survived = timeout = suspicious = 0
           survived_ids = []
-          killed_ids   = []
 
           for line in results_raw.splitlines():
               line = line.strip()
               if not line:
                   continue
-              # Formato: "Survived 🙁 (N)"  o  "Killed 🎿 (N)"
+              # Formato: "Survived 🙁 (N)"
               m = re.search(r'survived.*?(\d+)', line, re.IGNORECASE)
               if m: survived = int(m.group(1))
-              m = re.search(r'killed.*?(\d+)', line, re.IGNORECASE)
-              if m: killed = int(m.group(1))
-              m = re.search(r'timeout.*?(\d+)', line, re.IGNORECASE)
+              m = re.search(r'timed out.*?(\d+)', line, re.IGNORECASE)
               if m: timeout = int(m.group(1))
               m = re.search(r'suspicious.*?(\d+)', line, re.IGNORECASE)
               if m: suspicious = int(m.group(1))
@@ -436,7 +439,9 @@ jobs:
                       elif part.isdigit():
                           survived_ids.append(int(part))
 
-          total = killed + survived + timeout + suspicious
+          m = re.search(r'<testsuites[^>]*\btests="(\d+)"', junitxml_raw)
+          total = int(m.group(1)) if m else (survived + timeout + suspicious)
+          killed = max(total - survived - timeout - suspicious, 0)
           score = round(killed / total * 100) if total else 0
           bar_color = "#27ae60" if score >= 70 else ("#e67e22" if score >= 40 else "#c0392b")
           ts = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
@@ -483,9 +488,6 @@ jobs:
                   </details>
                 </td>
               </tr>"""
-
-          # ── Killed IDs compactos ─────────────────────────────────────────
-          killed_raw = run("mutmut results --only-killed 2>/dev/null || true")
 
           page = f"""<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
           <title>Mutaciones — Web Vulnerability Scanner</title>
