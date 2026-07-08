@@ -17,12 +17,18 @@ async def scan_vulnerabilities(target_url: str, depth: int = 1) -> str:
         return "Error: La variable de entorno WVS_API_KEY no está configurada."
 
     headers = {"X-API-Key": API_KEY, "Content-Type": "application/json"}
-    payload = {"target_url": target_url, "depth": depth}
+    # Activamos los módulos de vulnerabilidades críticas pero OMITIMOS el módulo "Crawling" (que es el que tarda minutos)
+    payload = {
+        "url": target_url, 
+        "depth": depth, 
+        "use_ai": False, 
+        "modules": ["SSL", "SQLi", "XSS", "Headers", "CSRF", "LFI", "CommandInjection"]
+    }
 
     async with httpx.AsyncClient() as client:
         try:
             # 1. Iniciar el escaneo de forma asíncrona
-            response = await client.post(f"{API_BASE_URL}/api/integrations/scans", json=payload, headers=headers, timeout=10.0)
+            response = await client.post(f"{API_BASE_URL}/api/scans/", json=payload, headers=headers, timeout=10.0)
             response.raise_for_status()
             scan_data = response.json()
             scan_id = scan_data["id"]
@@ -30,7 +36,7 @@ async def scan_vulnerabilities(target_url: str, depth: int = 1) -> str:
             # 2. Polling: esperar hasta que termine el escaneo
             while True:
                 await asyncio.sleep(3)
-                res_detail = await client.get(f"{API_BASE_URL}/api/integrations/scans/{scan_id}", headers=headers, timeout=10.0)
+                res_detail = await client.get(f"{API_BASE_URL}/api/scans/{scan_id}", headers=headers, timeout=10.0)
                 res_detail.raise_for_status()
                 detail = res_detail.json()
 
@@ -47,7 +53,11 @@ async def scan_vulnerabilities(target_url: str, depth: int = 1) -> str:
 
             report = f"⚠️ Se encontraron {len(vulns)} vulnerabilidades en {target_url} (Puntuación de Riesgo: {detail.get('risk_score')}/100):\n\n"
             for v in vulns:
-                report += f"- [{v['severity'].upper()}] {v['title']}: {v['description']}\n  Recomendación: {v['remediation']}\n\n"
+                severity = v.get('severity', 'info')
+                title = v.get('title', 'Unknown')
+                desc = v.get('description', '')
+                sol = v.get('solution', 'No remediation provided.')
+                report += f"- [{severity.upper()}] {title}: {desc}\n  Recomendación: {sol}\n\n"
 
             return report
 

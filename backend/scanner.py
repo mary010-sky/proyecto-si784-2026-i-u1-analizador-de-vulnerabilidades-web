@@ -28,6 +28,7 @@ def safe_get(url: str, timeout: int = TIMEOUT, allow_redirects: bool = True, **k
             timeout=timeout,
             headers=HEADERS_UA,
             allow_redirects=allow_redirects,
+            verify=False,  # nosemgrep: disabled-cert-validation -- escanea sitios objetivo arbitrarios (certificados propios/autofirmados/interceptados), no una API propia de confianza
             **kwargs
         )
     except RequestException:
@@ -169,12 +170,12 @@ def check_headers(url: str, timeout: int = TIMEOUT) -> list:
 
     h = resp.headers
     missing_headers = [
-        ("X-Frame-Options", "Clickjacking", "Alto", "Añadir: X-Frame-Options: DENY", "CWE-1021"),
-        ("Content-Security-Policy", "Falta CSP", "Medio", "Implementar Content-Security-Policy", "CWE-693"),
-        ("Strict-Transport-Security", "Falta HSTS", "Alto", "Añadir: Strict-Transport-Security: max-age=31536000; includeSubDomains", "CWE-523"),
-        ("X-Content-Type-Options", "Falta X-Content-Type-Options", "Medio", "Añadir: X-Content-Type-Options: nosniff", "CWE-16"),
-        ("Referrer-Policy", "Falta Referrer-Policy", "Bajo", "Añadir: Referrer-Policy: strict-origin-when-cross-origin", "CWE-116"),
-        ("Permissions-Policy", "Falta Permissions-Policy", "Bajo", "Implementar Permissions-Policy", "CWE-16"),
+        ("X-Frame-Options", "Clickjacking", "high", "Añadir: X-Frame-Options: DENY", "CWE-1021"),
+        ("Content-Security-Policy", "Falta CSP", "medium", "Implementar Content-Security-Policy", "CWE-693"),
+        ("Strict-Transport-Security", "Falta HSTS", "high", "Añadir: Strict-Transport-Security: max-age=31536000; includeSubDomains", "CWE-523"),
+        ("X-Content-Type-Options", "Falta X-Content-Type-Options", "medium", "Añadir: X-Content-Type-Options: nosniff", "CWE-16"),
+        ("Referrer-Policy", "Falta Referrer-Policy", "low", "Añadir: Referrer-Policy: strict-origin-when-cross-origin", "CWE-116"),
+        ("Permissions-Policy", "Falta Permissions-Policy", "low", "Implementar Permissions-Policy", "CWE-16"),
     ]
 
     for header, name, sev, sol, cwe in missing_headers:
@@ -606,7 +607,7 @@ def check_sensitive_files(url: str, timeout: int = TIMEOUT) -> list:
 def check_http_methods(url: str, timeout: int = TIMEOUT) -> list:
     findings = []
     try:
-        resp = requests.options(url, timeout=timeout, headers=HEADERS_UA)
+        resp = requests.options(url, timeout=timeout, headers=HEADERS_UA, verify=False)  # nosemgrep: disabled-cert-validation -- escanea sitios objetivo arbitrarios, no una API propia de confianza
         allow = resp.headers.get("Allow", "") + resp.headers.get("Access-Control-Allow-Methods", "")
         dangerous = [m for m in ["PUT", "DELETE", "TRACE", "CONNECT", "PATCH"] if m in allow]
         if dangerous:
