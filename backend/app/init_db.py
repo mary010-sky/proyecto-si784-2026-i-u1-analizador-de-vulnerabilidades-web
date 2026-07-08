@@ -18,16 +18,15 @@ def ensure_database() -> None:
         )
 
     server_engine = create_engine(settings.database_server_url, pool_pre_ping=True, future=True)
+    # settings.db_name ya fue validado arriba contra VALID_DB_NAME (solo [A-Za-z0-9_]):
+    # no es un CREATE DATABASE con datos de usuario, y los identificadores no se pueden
+    # bindear como parametros en DDL, asi que la interpolacion aqui es segura.
+    create_db_sql = text(  # nosemgrep: avoid-sqlalchemy-text
+        f"CREATE DATABASE IF NOT EXISTS `{settings.db_name}` "
+        "CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+    )
     with server_engine.connect() as connection:
-        # nosemgrep: avoid-sqlalchemy-text -- settings.db_name ya fue validado arriba
-        # contra VALID_DB_NAME (solo [A-Za-z0-9_]); no es un CREATE DATABASE con datos
-        # de usuario, y los identificadores no se pueden bindear como parametros en DDL.
-        connection.execute(
-            text(
-                f"CREATE DATABASE IF NOT EXISTS `{settings.db_name}` "
-                "CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
-            )
-        )
+        connection.execute(create_db_sql)
         connection.commit()
     server_engine.dispose()
 
