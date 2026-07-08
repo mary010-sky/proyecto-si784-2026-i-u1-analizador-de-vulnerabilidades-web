@@ -37,12 +37,18 @@ jobs:
         run: pip install -r requirements-dev.txt
 
       - name: Ejecutar tests unitarios con cobertura
-        run: pytest tests/test_scanner.py -v
+        run: |
+          pytest tests/test_scanner.py -v \
+            --junit-xml=unit-results.xml \
+            --html=unit-report.html --self-contained-html \
+            2>&1 | tee unit-output.txt
 
       - name: Ejecutar escenarios BDD
         run: |
           pytest tests/steps/ -v --no-cov \
-            --junit-xml=bdd-results.xml 2>&1 | tee bdd-output.txt
+            --junit-xml=bdd-results.xml \
+            --html=bdd-pytest-report.html --self-contained-html \
+            2>&1 | tee bdd-output.txt
 
       - name: Anotar cobertura en GH Actions (PRs)
         uses: MishaKav/pytest-coverage-comment@main
@@ -51,7 +57,116 @@ jobs:
           pytest-xml-coverage-path: backend/coverage.xml
           title: Cobertura de Pruebas — Web Vulnerability Scanner
 
-      - name: Generar reporte BDD HTML
+      - name: Generar reporte HTML de tests unitarios
+        if: always()
+        run: |
+          python3 - <<'PYEOF'
+          import xml.etree.ElementTree as ET, pathlib, html, re
+          from datetime import datetime
+
+          xml_path = pathlib.Path("unit-results.xml")
+          if not xml_path.exists():
+              print("unit-results.xml no encontrado"); exit(0)
+
+          tree = ET.parse(xml_path)
+          root = tree.getroot()
+          suite = root if root.tag == "testsuite" else root.find("testsuite")
+          tests   = int(suite.get("tests",   0))
+          failures= int(suite.get("failures", 0))
+          errors  = int(suite.get("errors",   0))
+          skipped = int(suite.get("skipped",  0))
+          passed  = tests - failures - errors - skipped
+          ts      = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+          pct     = round(passed / tests * 100) if tests else 0
+          bar_color = "#27ae60" if failures == 0 else "#c0392b"
+
+          # Agrupar por clase
+          groups = {}
+          for tc in suite.findall("testcase"):
+              cls  = tc.get("classname","").split(".")[-1]
+              name = tc.get("name","")
+              time_s = float(tc.get("time","0"))
+              fail = tc.find("failure")
+              err  = tc.find("error")
+              if fail is not None or err is not None:
+                  node = fail if fail is not None else err
+                  status = "FALLO"
+                  detail = html.escape((node.text or "")[:500])
+              else:
+                  status = "PASO"
+                  detail = ""
+              groups.setdefault(cls, []).append((name, time_s, status, detail))
+
+          group_html = ""
+          for cls, cases in sorted(groups.items()):
+              cls_pass = sum(1 for _,_,s,_ in cases if s == "PASO")
+              cls_total = len(cases)
+              cls_color = "#27ae60" if cls_pass == cls_total else "#c0392b"
+              rows = ""
+              for name, t, status, detail in cases:
+                  label = name.replace("test_","").replace("_"," ")
+                  badge = (f'<span style="background:#27ae60;color:white;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">✓ PASÓ</span>'
+                           if status == "PASO" else
+                           f'<span style="background:#c0392b;color:white;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">✗ FALLÓ</span>')
+                  detail_cell = f'<details><summary style="color:#c0392b;cursor:pointer;font-size:11px">Ver error</summary><pre style="background:#fff5f5;padding:8px;border-radius:4px;font-size:10px;white-space:pre-wrap">{detail}</pre></details>' if detail else '<span style="color:#aaa;font-size:11px">—</span>'
+                  rows += f"<tr><td style='width:80px'>{badge}</td><td style='font-size:12px'>{html.escape(label)}</td><td style='width:60px;text-align:right;color:#888;font-size:11px'>{t:.3f}s</td><td>{detail_cell}</td></tr>"
+              group_html += f"""
+              <div class="group">
+                <div class="group-header" style="border-left:4px solid {cls_color}">
+                  <span class="group-name">{html.escape(cls)}</span>
+                  <span class="group-badge" style="background:{cls_color}">{cls_pass}/{cls_total}</span>
+                </div>
+                <table><thead><tr><th>Estado</th><th>Test</th><th>Tiempo</th><th>Detalle</th></tr></thead>
+                <tbody>{rows}</tbody></table>
+              </div>"""
+
+          page = f"""<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
+          <title>Tests Unitarios — Web Vulnerability Scanner</title>
+          <style>
+          *{{box-sizing:border-box}}body{{font-family:system-ui;margin:0;background:#f4f6f9}}
+          .header{{background:linear-gradient(135deg,#1a1f35,#2c3e50);color:white;padding:24px 32px}}
+          h1{{margin:0;font-size:22px;font-weight:800}}.header p{{margin:6px 0 0;opacity:.7;font-size:13px}}
+          .container{{padding:24px 32px}}.cards{{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}}
+          .card{{background:white;border-radius:8px;padding:14px 20px;min-width:110px;
+                 border-top:4px solid #ccc;box-shadow:0 1px 6px rgba(0,0,0,.08)}}
+          .card .val{{font-size:28px;font-weight:800;margin:0}}.card .lbl{{font-size:11px;color:#888;margin-top:2px}}
+          .bar-bg{{background:#e0e0e0;border-radius:6px;height:12px;margin-bottom:24px}}
+          .bar{{background:{bar_color};height:12px;border-radius:6px;width:{pct}%;transition:width .5s}}
+          .group{{background:white;border-radius:10px;margin-bottom:16px;overflow:hidden;
+                  box-shadow:0 1px 6px rgba(0,0,0,.08)}}
+          .group-header{{display:flex;align-items:center;justify-content:space-between;
+                         padding:12px 16px;background:#f8fafc}}
+          .group-name{{font-weight:700;font-size:13px;color:#2c3e50}}
+          .group-badge{{color:white;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:700}}
+          table{{width:100%;border-collapse:collapse}}
+          th{{background:#2c3e50;color:white;padding:8px 14px;text-align:left;font-size:11px}}
+          td{{padding:8px 14px;border-bottom:1px solid #f0f0f0;vertical-align:middle}}
+          tr:last-child td{{border-bottom:none}}tr:hover{{background:#f8fafc}}
+          details summary{{list-style:none}}details summary::-webkit-details-marker{{display:none}}
+          pre{{margin:4px 0 0;overflow-x:auto}}
+          </style></head>
+          <body>
+          <div class="header">
+            <h1>🧪 Tests Unitarios — Web Vulnerability Scanner</h1>
+            <p>pytest · scanner.py · {ts}</p>
+          </div>
+          <div class="container">
+            <div class="cards">
+              <div class="card" style="border-color:{bar_color}"><p class="val">{pct}%</p><p class="lbl">Pasaron</p></div>
+              <div class="card" style="border-color:#27ae60"><p class="val">{passed}</p><p class="lbl">Exitosos</p></div>
+              <div class="card" style="border-color:#c0392b"><p class="val">{failures+errors}</p><p class="lbl">Fallaron</p></div>
+              <div class="card" style="border-color:#2980b9"><p class="val">{tests}</p><p class="lbl">Total</p></div>
+              <div class="card" style="border-color:#95a5a6"><p class="val">{len(groups)}</p><p class="lbl">Clases</p></div>
+            </div>
+            <div class="bar-bg"><div class="bar"></div></div>
+            {group_html}
+          </div></body></html>"""
+
+          pathlib.Path("unit-report-custom.html").write_text(page, encoding="utf-8")
+          print(f"Tests unitarios: {passed}/{tests} pasaron ({pct}%) en {len(groups)} clases")
+          PYEOF
+
+      - name: Generar reporte HTML de BDD
         if: always()
         run: |
           python3 - <<'PYEOF'
@@ -60,60 +175,72 @@ jobs:
 
           xml_path = pathlib.Path("bdd-results.xml")
           if not xml_path.exists():
-              exit(0)
+              print("bdd-results.xml no encontrado"); exit(0)
 
           tree = ET.parse(xml_path)
           root = tree.getroot()
           suite = root if root.tag == "testsuite" else root.find("testsuite")
-          tests = int(suite.get("tests", 0))
-          failures = int(suite.get("failures", 0))
-          errors = int(suite.get("errors", 0))
-          skipped = int(suite.get("skipped", 0))
-          passed = tests - failures - errors - skipped
-          ts = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
-          pct = round(passed / tests * 100) if tests else 0
+          tests   = int(suite.get("tests",   0))
+          failures= int(suite.get("failures", 0))
+          errors  = int(suite.get("errors",   0))
+          skipped = int(suite.get("skipped",  0))
+          passed  = tests - failures - errors - skipped
+          ts      = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+          pct     = round(passed / tests * 100) if tests else 0
           bar_color = "#27ae60" if failures == 0 else "#c0392b"
 
           rows = ""
           for tc in suite.findall("testcase"):
-              name = html.escape(tc.get("name","").replace("test_","").replace("_"," ").title())
+              name   = html.escape(tc.get("name","").replace("test_","").replace("_"," ").title())
+              cls    = html.escape(tc.get("classname","").split(".")[-1])
               time_s = tc.get("time","0")
-              failure = tc.find("failure")
-              if failure is not None:
-                  status = '<span style="color:#c0392b;font-weight:bold">FALLO</span>'
-                  detail = html.escape((failure.text or "")[:300])
+              fail   = tc.find("failure")
+              if fail is not None:
+                  badge  = '<span style="background:#c0392b;color:white;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">✗ FALLÓ</span>'
+                  detail = f'<details><summary style="color:#c0392b;cursor:pointer;font-size:11px">Ver error</summary><pre style="background:#fff5f5;padding:8px;border-radius:4px;font-size:10px;white-space:pre-wrap">{html.escape((fail.text or "")[:600])}</pre></details>'
               else:
-                  status = '<span style="color:#27ae60;font-weight:bold">PASO</span>'
-                  detail = ""
-              rows += f"<tr><td>{status}</td><td>{name}</td><td>{time_s}s</td><td><small>{detail}</small></td></tr>"
+                  badge  = '<span style="background:#27ae60;color:white;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">✓ PASÓ</span>'
+                  detail = '<span style="color:#aaa;font-size:11px">—</span>'
+              rows += f"<tr><td>{badge}</td><td style='font-size:12px'>{name}</td><td style='color:#666;font-size:11px'>{cls}</td><td style='color:#888;font-size:11px;text-align:right'>{time_s}s</td><td>{detail}</td></tr>"
 
           page = f"""<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
           <title>BDD — Web Vulnerability Scanner</title>
-          <style>body{{font-family:system-ui;margin:0;background:#f4f6f9}}
-          .header{{background:#2c3e50;color:white;padding:20px 30px}}h1{{margin:0;font-size:22px}}
-          .header p{{margin:4px 0 0;opacity:.7;font-size:13px}}.container{{padding:20px 30px}}
-          .cards{{display:flex;gap:12px;margin-bottom:20px}}.card{{background:white;border-radius:8px;
-          padding:14px 18px;min-width:110px;border-top:3px solid #ccc;box-shadow:0 1px 4px rgba(0,0,0,.08)}}
+          <style>
+          *{{box-sizing:border-box}}body{{font-family:system-ui;margin:0;background:#f4f6f9}}
+          .header{{background:linear-gradient(135deg,#1a3a1a,#27ae60);color:white;padding:24px 32px}}
+          h1{{margin:0;font-size:22px;font-weight:800}}.header p{{margin:6px 0 0;opacity:.8;font-size:13px}}
+          .container{{padding:24px 32px}}.cards{{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}}
+          .card{{background:white;border-radius:8px;padding:14px 20px;min-width:110px;
+                 border-top:4px solid #ccc;box-shadow:0 1px 6px rgba(0,0,0,.08)}}
           .card .val{{font-size:28px;font-weight:800;margin:0}}.card .lbl{{font-size:11px;color:#888;margin-top:2px}}
-          .card.green{{border-color:#27ae60}}.card.red{{border-color:#c0392b}}.card.blue{{border-color:#2980b9}}
-          .bar-bg{{background:#e0e0e0;border-radius:6px;height:12px;margin-bottom:20px}}
+          .bar-bg{{background:#e0e0e0;border-radius:6px;height:12px;margin-bottom:24px}}
           .bar{{background:{bar_color};height:12px;border-radius:6px;width:{pct}%}}
-          table{{width:100%;border-collapse:collapse;background:white;border-radius:8px;
-          overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)}}
-          th{{background:#2c3e50;color:white;padding:10px 14px;text-align:left;font-size:12px}}
-          td{{padding:9px 14px;border-bottom:1px solid #f0f0f0;font-size:12px;vertical-align:top}}
-          tr:hover{{background:#f8fafc}}</style></head>
-          <body><div class="header"><h1>🥒 BDD — Web Vulnerability Scanner</h1>
-          <p>Escenarios Gherkin con pytest-bdd · {ts}</p></div>
-          <div class="container"><div class="cards">
-          <div class="card green"><p class="val">{passed}</p><p class="lbl">Pasaron</p></div>
-          <div class="card {'red' if failures else 'green'}"><p class="val">{failures}</p><p class="lbl">Fallaron</p></div>
-          <div class="card blue"><p class="val">{tests}</p><p class="lbl">Total</p></div></div>
-          <div class="bar-bg"><div class="bar" title="{pct}% pasaron"></div></div>
-          <table><thead><tr><th>Estado</th><th>Escenario</th><th>Tiempo</th><th>Detalle</th></tr></thead>
-          <tbody>{rows}</tbody></table></div></body></html>"""
+          table{{width:100%;border-collapse:collapse;background:white;border-radius:10px;
+                 overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.08)}}
+          th{{background:#27ae60;color:white;padding:10px 14px;text-align:left;font-size:11px}}
+          td{{padding:9px 14px;border-bottom:1px solid #f0f0f0;vertical-align:middle}}
+          tr:last-child td{{border-bottom:none}}tr:hover{{background:#f8fafc}}
+          details summary{{list-style:none;cursor:pointer}}
+          </style></head>
+          <body>
+          <div class="header">
+            <h1>🥒 Pruebas BDD (Gherkin) — Web Vulnerability Scanner</h1>
+            <p>pytest-bdd · Escenarios de comportamiento · {ts}</p>
+          </div>
+          <div class="container">
+            <div class="cards">
+              <div class="card" style="border-color:{bar_color}"><p class="val">{pct}%</p><p class="lbl">Pasaron</p></div>
+              <div class="card" style="border-color:#27ae60"><p class="val">{passed}</p><p class="lbl">Exitosos</p></div>
+              <div class="card" style="border-color:#c0392b"><p class="val">{failures}</p><p class="lbl">Fallaron</p></div>
+              <div class="card" style="border-color:#2980b9"><p class="val">{tests}</p><p class="lbl">Total</p></div>
+            </div>
+            <div class="bar-bg"><div class="bar"></div></div>
+            <table><thead><tr><th>Estado</th><th>Escenario</th><th>Feature</th><th>Tiempo</th><th>Detalle</th></tr></thead>
+            <tbody>{rows if rows else '<tr><td colspan=5 style="text-align:center;padding:20px;color:#888">Sin escenarios BDD ejecutados</td></tr>'}</tbody>
+            </table>
+          </div></body></html>"""
 
-          pathlib.Path("bdd-report.html").write_text(page)
+          pathlib.Path("bdd-report.html").write_text(page, encoding="utf-8")
           print(f"BDD: {passed}/{tests} pasaron ({pct}%)")
           PYEOF
 
@@ -125,6 +252,16 @@ jobs:
           path: |
             backend/htmlcov/
             backend/coverage.xml
+
+      - name: Subir reporte tests unitarios
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: report-unit-tests
+          path: |
+            backend/unit-report-custom.html
+            backend/unit-report.html
+            backend/unit-results.xml
 
       - name: Subir reporte BDD
         uses: actions/upload-artifact@v4
@@ -255,93 +392,179 @@ jobs:
         run: pip install -r requirements-dev.txt
 
       - name: Ejecutar mutmut
-        run: mutmut run --no-progress || true
+        run: mutmut run --no-progress 2>&1 | tee mutmut-output.txt || true
 
-      - name: Generar reporte HTML de mutaciones
+      - name: Generar reporte HTML de mutaciones (con diffs)
         if: always()
         run: |
           python3 - <<'PYEOF'
-          import subprocess, pathlib, html
+          import subprocess, pathlib, html, re
           from datetime import datetime
 
           def run(cmd):
               r = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-              return r.stdout + r.stderr
+              return (r.stdout + r.stderr).strip()
 
+          # ── Obtener resumen ──────────────────────────────────────────────
           results_raw = run("mutmut results")
-          lines = results_raw.strip().splitlines()
-          killed = survived = timeout = suspicious = 0
 
-          for line in lines:
-              if ":" in line:
-                  key, _, val = line.partition(":")
-                  try:
-                      count = int(val.strip())
-                      key = key.strip().lower()
-                      if "killed" in key:    killed = count
-                      elif "survived" in key: survived = count
-                      elif "timeout" in key:  timeout = count
-                      elif "suspicious" in key: suspicious = count
-                  except ValueError:
-                      pass
+          killed = survived = timeout = suspicious = 0
+          survived_ids = []
+          killed_ids   = []
+
+          for line in results_raw.splitlines():
+              line = line.strip()
+              if not line:
+                  continue
+              # Formato: "Survived 🙁 (N)"  o  "Killed 🎿 (N)"
+              m = re.search(r'survived.*?(\d+)', line, re.IGNORECASE)
+              if m: survived = int(m.group(1))
+              m = re.search(r'killed.*?(\d+)', line, re.IGNORECASE)
+              if m: killed = int(m.group(1))
+              m = re.search(r'timeout.*?(\d+)', line, re.IGNORECASE)
+              if m: timeout = int(m.group(1))
+              m = re.search(r'suspicious.*?(\d+)', line, re.IGNORECASE)
+              if m: suspicious = int(m.group(1))
+              # Líneas con IDs: "---- app/scanner.py (N) ----"  o  "3-6, 9-10, ..."
+              if re.match(r'^[\d,\s\-]+$', line):
+                  for part in line.split(','):
+                      part = part.strip()
+                      if '-' in part:
+                          a, b = part.split('-', 1)
+                          try: survived_ids.extend(range(int(a), int(b)+1))
+                          except: pass
+                      elif part.isdigit():
+                          survived_ids.append(int(part))
 
           total = killed + survived + timeout + suspicious
           score = round(killed / total * 100) if total else 0
           bar_color = "#27ae60" if score >= 70 else ("#e67e22" if score >= 40 else "#c0392b")
           ts = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
 
-          detail_rows = ""
-          for line in lines:
-              l = line.strip()
-              if not l: continue
-              escaped = html.escape(l)
-              if "survived" in l.lower():
-                  badge = '<span style="background:#c0392b;color:white;padding:2px 8px;border-radius:10px;font-size:11px">SOBREVIVIO</span>'
-              elif "killed" in l.lower():
-                  badge = '<span style="background:#27ae60;color:white;padding:2px 8px;border-radius:10px;font-size:11px">MATADO</span>'
-              else:
-                  badge = '<span style="background:#95a5a6;color:white;padding:2px 8px;border-radius:10px;font-size:11px">INFO</span>'
-              detail_rows += f"<tr><td>{badge}</td><td>{escaped}</td></tr>"
+          # ── Obtener diffs de mutantes sobrevivientes (máx 80) ───────────
+          survived_rows = ""
+          for mid in survived_ids[:80]:
+              diff_raw = run(f"mutmut show {mid}")
+              if not diff_raw:
+                  continue
+              lines_diff = diff_raw.splitlines()
+              # Extraer línea de origen del diff (--- / +++ o encabezado)
+              location = ""
+              for dl in lines_diff:
+                  if dl.startswith("---") or dl.startswith("+++"):
+                      location = html.escape(dl)
+                      break
+
+              diff_colored = ""
+              for dl in lines_diff:
+                  esc = html.escape(dl)
+                  if dl.startswith("---") or dl.startswith("+++"):
+                      diff_colored += f'<span style="color:#888;font-size:10px">{esc}</span>\n'
+                  elif dl.startswith("-") and not dl.startswith("---"):
+                      diff_colored += f'<span style="background:#ffeef0;color:#c0392b;display:block">{esc}</span>'
+                  elif dl.startswith("+") and not dl.startswith("+++"):
+                      diff_colored += f'<span style="background:#e6ffed;color:#27ae60;display:block">{esc}</span>'
+                  elif dl.startswith("@@"):
+                      diff_colored += f'<span style="color:#2980b9;font-size:10px">{esc}</span>\n'
+                  else:
+                      diff_colored += f'<span>{esc}</span>\n'
+
+              survived_rows += f"""
+              <tr>
+                <td style="width:50px;text-align:center;font-weight:700;color:#c0392b">#{mid}</td>
+                <td>
+                  <details>
+                    <summary style="cursor:pointer;font-size:12px;color:#c0392b;font-weight:600;padding:4px 0">
+                      🔴 Mutante #{mid} sobrevivió — clic para ver cambio
+                    </summary>
+                    <pre style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:6px;
+                                padding:12px;margin:8px 0;font-size:11px;overflow-x:auto;
+                                font-family:'Courier New',monospace;line-height:1.6">{diff_colored}</pre>
+                  </details>
+                </td>
+              </tr>"""
+
+          # ── Killed IDs compactos ─────────────────────────────────────────
+          killed_raw = run("mutmut results --only-killed 2>/dev/null || true")
 
           page = f"""<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
           <title>Mutaciones — Web Vulnerability Scanner</title>
-          <style>body{{font-family:system-ui;margin:0;background:#f4f6f9}}
-          .header{{background:#2c3e50;color:white;padding:20px 30px}}h1{{margin:0;font-size:22px}}
-          .header p{{margin:4px 0 0;opacity:.7;font-size:13px}}.container{{padding:20px 30px}}
-          .cards{{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}}
-          .card{{background:white;border-radius:8px;padding:14px 18px;min-width:110px;
-          border-top:3px solid #ccc;box-shadow:0 1px 4px rgba(0,0,0,.08)}}
+          <style>
+          *{{box-sizing:border-box}}body{{font-family:system-ui;margin:0;background:#f4f6f9}}
+          .header{{background:linear-gradient(135deg,#1a1f35,#8e44ad);color:white;padding:24px 32px}}
+          h1{{margin:0;font-size:22px;font-weight:800}}.header p{{margin:6px 0 0;opacity:.8;font-size:13px}}
+          .container{{padding:24px 32px}}.cards{{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}}
+          .card{{background:white;border-radius:8px;padding:14px 20px;min-width:120px;
+                 border-top:4px solid #ccc;box-shadow:0 1px 6px rgba(0,0,0,.08)}}
           .card .val{{font-size:28px;font-weight:800;margin:0}}.card .lbl{{font-size:11px;color:#888;margin-top:2px}}
-          .bar-bg{{background:#e0e0e0;border-radius:6px;height:16px;margin-bottom:8px}}
-          .bar{{background:{bar_color};height:16px;border-radius:6px;width:{score}%;
-          display:flex;align-items:center;justify-content:flex-end;padding-right:8px}}
-          .bar span{{color:white;font-size:11px;font-weight:700}}
-          .score-label{{font-size:12px;color:#888;margin-bottom:20px}}
-          table{{width:100%;border-collapse:collapse;background:white;border-radius:8px;
-          overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)}}
-          th{{background:#2c3e50;color:white;padding:10px 14px;text-align:left;font-size:12px}}
-          td{{padding:9px 14px;border-bottom:1px solid #f0f0f0;font-size:12px;vertical-align:top}}
-          pre{{background:#f0f4f8;padding:12px;border-radius:6px;font-size:11px;overflow-x:auto}}
+          .bar-outer{{background:#e0e0e0;border-radius:8px;height:20px;margin-bottom:6px;overflow:hidden}}
+          .bar-inner{{background:{bar_color};height:20px;width:{score}%;display:flex;
+                      align-items:center;justify-content:flex-end;padding-right:10px;border-radius:8px}}
+          .bar-inner span{{color:white;font-size:12px;font-weight:800}}
+          .bar-label{{font-size:12px;color:#666;margin-bottom:24px}}
+          h2{{font-size:15px;color:#2c3e50;margin:24px 0 12px;border-left:4px solid #c0392b;padding-left:10px}}
+          h2.killed{{border-color:#27ae60}}
+          table{{width:100%;border-collapse:collapse;background:white;border-radius:10px;
+                 overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.08);margin-bottom:24px}}
+          th{{background:#8e44ad;color:white;padding:10px 14px;text-align:left;font-size:11px}}
+          td{{padding:8px 14px;border-bottom:1px solid #f0f0f0;vertical-align:top}}
+          tr:last-child td{{border-bottom:none}}
+          details summary{{list-style:none}}details summary::-webkit-details-marker{{display:none}}
+          pre.raw{{background:#f0f4f8;border:1px solid #dee2e6;border-radius:6px;
+                   padding:12px;font-size:11px;overflow-x:auto;white-space:pre-wrap;
+                   font-family:'Courier New',monospace;margin-top:12px}}
+          .tip{{background:#fff9e6;border:1px solid #f0c040;border-radius:8px;
+                padding:12px 16px;font-size:12px;color:#856404;margin-bottom:20px}}
           </style></head>
-          <body><div class="header"><h1>🧬 Pruebas de Mutaciones — Web Vulnerability Scanner</h1>
-          <p>mutmut sobre scanner.py · {ts}</p></div>
-          <div class="container"><div class="cards">
-          <div class="card" style="border-color:{bar_color}"><p class="val">{score}%</p><p class="lbl">Mutation Score</p></div>
-          <div class="card" style="border-color:#27ae60"><p class="val">{killed}</p><p class="lbl">Matados</p></div>
-          <div class="card" style="border-color:#c0392b"><p class="val">{survived}</p><p class="lbl">Sobrevivieron</p></div>
-          <div class="card" style="border-color:#95a5a6"><p class="val">{total}</p><p class="lbl">Total</p></div>
+          <body>
+          <div class="header">
+            <h1>🧬 Pruebas de Mutaciones — Web Vulnerability Scanner</h1>
+            <p>mutmut · app/scanner.py · {ts}</p>
           </div>
-          <div class="bar-bg"><div class="bar"><span>{score}%</span></div></div>
-          <p class="score-label">Score ≥ 70% es considerado bueno · scanner.py</p>
-          <table><thead><tr><th>Estado</th><th>Mutante</th></tr></thead>
-          <tbody>{detail_rows if detail_rows else '<tr><td colspan=2 style="text-align:center;padding:20px;color:#888">Sin detalle — revisa el log de CI</td></tr>'}
-          </tbody></table>
-          <h3 style="margin:20px 0 10px;font-size:14px">Salida completa</h3>
-          <pre>{html.escape(results_raw[:3000])}</pre>
+          <div class="container">
+            <div class="cards">
+              <div class="card" style="border-color:{bar_color}">
+                <p class="val">{score}%</p><p class="lbl">Mutation Score</p>
+              </div>
+              <div class="card" style="border-color:#27ae60">
+                <p class="val">{killed}</p><p class="lbl">🎯 Matados</p>
+              </div>
+              <div class="card" style="border-color:#c0392b">
+                <p class="val">{survived}</p><p class="lbl">⚠️ Sobrevivieron</p>
+              </div>
+              <div class="card" style="border-color:#e67e22">
+                <p class="val">{timeout}</p><p class="lbl">⏱ Timeout</p>
+              </div>
+              <div class="card" style="border-color:#95a5a6">
+                <p class="val">{total}</p><p class="lbl">Total</p>
+              </div>
+            </div>
+            <div class="bar-outer"><div class="bar-inner"><span>{score}%</span></div></div>
+            <p class="bar-label">Score ≥ 70% es bueno · ≥ 80% es excelente · objetivo: matar más mutantes</p>
+
+            <div class="tip">
+              💡 <strong>¿Qué es un mutante sobreviviente?</strong> mutmut cambia una pequeña parte del código
+              (ej: <code>==</code> → <code>!=</code>, elimina un elemento de una lista) y ejecuta los tests.
+              Si los tests <strong>no detectan</strong> el cambio, el mutante "sobrevive" — indica que esa rama
+              del código no está bien cubierta. Cada bloque <em>clic para ver cambio</em> muestra exactamente
+              qué se modificó.
+            </div>
+
+            <h2>⚠️ Mutantes Sobrevivientes ({survived}) — requieren tests adicionales</h2>
+            <table>
+              <thead><tr><th>#</th><th>Cambio introducido por mutmut (diff)</th></tr></thead>
+              <tbody>
+                {survived_rows if survived_rows else
+                  '<tr><td colspan=2 style="text-align:center;padding:20px;color:#27ae60;font-weight:600">✅ Todos los mutantes fueron detectados por los tests</td></tr>'}
+              </tbody>
+            </table>
+
+            <h2 class="killed">✅ Resumen de ejecución completa</h2>
+            <pre class="raw">{html.escape(results_raw[:4000])}</pre>
           </div></body></html>"""
 
           pathlib.Path("mutations-report.html").write_text(page, encoding="utf-8")
-          print(f"Mutation score: {score}% ({killed} killed / {total} total)")
+          print(f"Mutation score: {score}% ({killed} matados / {survived} sobrevivieron / {total} total)")
           PYEOF
 
       - name: Subir reporte de mutaciones
@@ -416,6 +639,7 @@ jobs:
     name: Publicar reportes en GH Pages
     runs-on: ubuntu-latest
     needs: [backend-tests, semgrep, mutation-tests, playwright]
+
     if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && always()
     environment:
       name: github-pages
@@ -428,6 +652,13 @@ jobs:
         with:
           name: report-coverage
           path: _site/coverage
+        continue-on-error: true
+
+      - name: Descargar reporte tests unitarios
+        uses: actions/download-artifact@v4
+        with:
+          name: report-unit-tests
+          path: _site/unit-tests
         continue-on-error: true
 
       - name: Descargar reporte BDD
@@ -496,6 +727,12 @@ jobs:
               <h2>Cobertura de Código</h2>
               <p>Reporte pytest-cov con detalle por módulo y línea</p>
               <span class="badge">pytest-cov</span>
+            </a>
+            <a class="card green" href="unit-tests/unit-report-custom.html" style="border-color:#16a085">
+              <div class="icon">🧪</div>
+              <h2>Tests Unitarios</h2>
+              <p>Detalle de cada test agrupado por clase — qué se verificó y resultado</p>
+              <span class="badge" style="background:#16a085">pytest</span>
             </a>
             <a class="card blue" href="semgrep/semgrep-report.html">
               <div class="icon">🔍</div>
